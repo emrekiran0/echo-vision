@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import RealisticRoad from "../components/RealisticRoad";
+import SonarRadar from "../components/SonarRadar";
 
 type Tab = "dashboard" | "architecture";
 
@@ -17,6 +18,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [emergency, setEmergency] = useState(false);
   const [blinkOn, setBlinkOn] = useState(false);
   const [tick, setTick] = useState(0);
+  const [sirenActive, setSirenActive] = useState(false);
 
   useEffect(() => {
     const iv = setInterval(() => {
@@ -40,50 +42,63 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     setLeftAlert(false);
     setRightAlert(false);
     setEmergency(false);
+    setSirenActive(false);
     setLeftDist(120);
     setRightDist(95);
   }, []);
 
   const triggerEmergency = useCallback(() => {
-    setEmergency((e) => !e);
-    if (!emergency) {
-      setLeftAlert(false);
-      setRightAlert(false);
-    }
-  }, [emergency]);
+    setEmergency((e) => {
+      if (!e) { setLeftAlert(false); setRightAlert(false); }
+      return !e;
+    });
+  }, []);
+
+  const triggerSiren = useCallback(() => {
+    setSirenActive(true);
+    setEmergency(true);
+  }, []);
+
+  const stopSiren = useCallback(() => {
+    setSirenActive(false);
+    setEmergency(false);
+  }, []);
+
+  const leftAlertFinal = leftAlert || emergency;
+  const rightAlertFinal = rightAlert || emergency;
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden"
       style={{
+        minHeight: "100vh",
         background: "#060608",
         color: "#e0e0e8",
         fontFamily: "'Orbitron', monospace",
       }}
     >
-      {/* Header */}
+      {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <header
         style={{
-          background: "linear-gradient(180deg, #0c0c14 0%, #060608 100%)",
+          background: "linear-gradient(180deg,#0c0c14 0%,#060608 100%)",
           borderBottom: "1px solid #14141e",
-          padding: "14px 24px",
+          padding: "12px 20px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
+              width: 32,
+              height: 32,
+              borderRadius: 9,
               background: "rgba(0,229,255,0.08)",
               border: "1px solid rgba(0,229,255,0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 16,
+              fontSize: 15,
             }}
           >
             👂
@@ -91,63 +106,50 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           <div>
             <div
               style={{
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: 900,
-                letterSpacing: "0.32em",
+                letterSpacing: "0.3em",
                 color: "#00e5ff",
-                textShadow: "0 0 18px rgba(0,229,255,0.5)",
+                textShadow: "0 0 16px rgba(0,229,255,0.5)",
                 lineHeight: 1,
               }}
             >
               ECHOLENS
             </div>
-            <div
-              style={{
-                fontSize: 9,
-                color: "#3a3a5a",
-                letterSpacing: "0.22em",
-                marginTop: 3,
-              }}
-            >
+            <div style={{ fontSize: 8, color: "#2e2e4e", letterSpacing: "0.2em", marginTop: 3 }}>
               HEARING-ASSISTIVE DRIVING KIT
             </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {/* Live pill */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 6,
-              background: "rgba(0,230,118,0.06)",
-              border: "1px solid rgba(0,230,118,0.2)",
+              gap: 5,
+              background: "rgba(0,230,118,0.07)",
+              border: "1px solid rgba(0,230,118,0.22)",
               borderRadius: 20,
               padding: "5px 12px",
             }}
           >
             <div
               style={{
-                width: 6,
-                height: 6,
+                width: 5,
+                height: 5,
                 borderRadius: "50%",
                 background: "#00e676",
-                boxShadow: "0 0 6px #00e676",
-                animation: "pulse 1.5s ease-in-out infinite",
+                boxShadow: "0 0 5px #00e676",
               }}
             />
-            <span style={{ fontSize: 9, color: "#00e676", letterSpacing: "0.18em" }}>LIVE</span>
+            <span style={{ fontSize: 8, color: "#00e676", letterSpacing: "0.18em" }}>LIVE</span>
           </div>
 
-          {/* Back button */}
           {onBack && (
             <button
               onClick={onBack}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
                 padding: "5px 12px",
                 borderRadius: 20,
                 border: "1px solid #14141e",
@@ -155,17 +157,8 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
                 color: "#3a3a5a",
                 cursor: "pointer",
                 fontFamily: "'Orbitron', monospace",
-                fontSize: 9,
+                fontSize: 8,
                 letterSpacing: "0.18em",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "#8a8aaa";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3a";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = "#3a3a5a";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "#14141e";
               }}
             >
               ← HOME
@@ -174,22 +167,16 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
         </div>
       </header>
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          borderBottom: "1px solid #14141e",
-          background: "#060608",
-        }}
-      >
+      {/* ── TABS ─────────────────────────────────────────────────────────────── */}
+      <div style={{ display: "flex", borderBottom: "1px solid #14141e" }}>
         {(["dashboard", "architecture"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
-              padding: "10px 28px",
+              padding: "9px 24px",
               fontSize: 10,
-              letterSpacing: "0.2em",
+              letterSpacing: "0.18em",
               textTransform: "uppercase",
               border: "none",
               borderBottom: tab === t ? "2px solid #00e5ff" : "2px solid transparent",
@@ -206,168 +193,111 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
       </div>
 
       {tab === "dashboard" ? (
-        <main style={{ maxWidth: 860, margin: "0 auto", padding: "20px 16px" }}>
-          {/* === WINDSHIELD VIEW === */}
+        <main style={{ maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
+
+          {/* ── ROAD VIEW ──────────────────────────────────────────────────────── */}
           <div
             style={{
               position: "relative",
-              borderRadius: 20,
+              borderRadius: 16,
               overflow: "hidden",
-              marginBottom: 16,
-              boxShadow: "0 0 60px rgba(0,0,0,0.8)",
+              marginBottom: 12,
+              boxShadow: "0 0 40px rgba(0,0,0,0.7)",
             }}
           >
             <RealisticRoad
-              leftAlert={leftAlert}
-              rightAlert={rightAlert}
+              leftAlert={leftAlertFinal}
+              rightAlert={rightAlertFinal}
               emergency={emergency}
               blinkOn={blinkOn}
               tick={tick}
             />
 
-            {/* Left glow alert overlay */}
+            {/* Left glow overlay */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "linear-gradient(to right, rgba(255,23,68,0.55) 0%, rgba(255,23,68,0.18) 30%, transparent 55%)",
+                background: "linear-gradient(to right,rgba(255,23,68,0.5) 0%,rgba(255,23,68,0.15) 28%,transparent 52%)",
                 pointerEvents: "none",
-                opacity: leftAlert ? (blinkOn ? 1 : 0.55) : 0,
-                transition: "opacity 0.4s ease",
-                borderRadius: 20,
+                opacity: leftAlertFinal ? (blinkOn ? 1 : 0.5) : 0,
+                transition: "opacity 0.35s ease",
               }}
             />
-
-            {/* Right glow alert overlay */}
+            {/* Right glow overlay */}
             <div
               style={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "linear-gradient(to left, rgba(255,23,68,0.55) 0%, rgba(255,23,68,0.18) 30%, transparent 55%)",
+                background: "linear-gradient(to left,rgba(255,23,68,0.5) 0%,rgba(255,23,68,0.15) 28%,transparent 52%)",
                 pointerEvents: "none",
-                opacity: rightAlert ? (blinkOn ? 1 : 0.55) : 0,
-                transition: "opacity 0.4s ease",
-                borderRadius: 20,
+                opacity: rightAlertFinal ? (blinkOn ? 1 : 0.5) : 0,
+                transition: "opacity 0.35s ease",
               }}
             />
 
             {/* Left border glow */}
-            {leftAlert && (
+            {leftAlertFinal && (
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  borderRadius: 20,
-                  border: `3px solid rgba(255,23,68,${blinkOn ? 0.9 : 0.3})`,
-                  borderRight: "none",
-                  borderTop: "none",
-                  borderBottom: "none",
-                  boxShadow: `inset 6px 0 30px rgba(255,23,68,${blinkOn ? 0.5 : 0.15})`,
+                  borderRadius: 16,
+                  borderLeft: `3px solid rgba(255,23,68,${blinkOn ? 0.9 : 0.25})`,
+                  boxShadow: `inset 5px 0 24px rgba(255,23,68,${blinkOn ? 0.45 : 0.12})`,
                   pointerEvents: "none",
-                  transition: "all 0.4s ease",
+                  transition: "all 0.35s",
                 }}
               />
             )}
-
             {/* Right border glow */}
-            {rightAlert && (
+            {rightAlertFinal && (
               <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  borderRadius: 20,
-                  border: `3px solid rgba(255,23,68,${blinkOn ? 0.9 : 0.3})`,
-                  borderLeft: "none",
-                  borderTop: "none",
-                  borderBottom: "none",
-                  boxShadow: `inset -6px 0 30px rgba(255,23,68,${blinkOn ? 0.5 : 0.15})`,
+                  borderRadius: 16,
+                  borderRight: `3px solid rgba(255,23,68,${blinkOn ? 0.9 : 0.25})`,
+                  boxShadow: `inset -5px 0 24px rgba(255,23,68,${blinkOn ? 0.45 : 0.12})`,
                   pointerEvents: "none",
-                  transition: "all 0.4s ease",
+                  transition: "all 0.35s",
                 }}
               />
             )}
 
-            {/* Left BLIND SPOT label */}
-            {leftAlert && (
+            {/* Left label */}
+            {leftAlertFinal && (
               <div
                 style={{
                   position: "absolute",
-                  left: 16,
+                  left: 14,
                   top: "50%",
                   transform: "translateY(-50%)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  gap: 4,
                   opacity: blinkOn ? 1 : 0.5,
-                  transition: "opacity 0.4s ease",
+                  transition: "opacity 0.35s",
                   pointerEvents: "none",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#ff5252",
-                    letterSpacing: "0.15em",
-                    textShadow: "0 0 12px rgba(255,23,68,0.8)",
-                  }}
-                >
-                  ◀ BLIND SPOT
-                </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 900,
-                    color: "#ff1744",
-                    textShadow: "0 0 16px rgba(255,23,68,0.9)",
-                  }}
-                >
-                  {leftDist}cm
-                </div>
+                <div style={{ fontSize: 10, color: "#ff5252", letterSpacing: "0.12em", textShadow: "0 0 10px rgba(255,23,68,0.8)" }}>◀ BLIND SPOT</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#ff1744", textShadow: "0 0 14px rgba(255,23,68,0.9)" }}>{leftDist}cm</div>
               </div>
             )}
-
-            {/* Right BLIND SPOT label */}
-            {rightAlert && (
+            {/* Right label */}
+            {rightAlertFinal && (
               <div
                 style={{
                   position: "absolute",
-                  right: 16,
+                  right: 14,
                   top: "50%",
                   transform: "translateY(-50%)",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: 4,
+                  textAlign: "right",
                   opacity: blinkOn ? 1 : 0.5,
-                  transition: "opacity 0.4s ease",
+                  transition: "opacity 0.35s",
                   pointerEvents: "none",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#ff5252",
-                    letterSpacing: "0.15em",
-                    textShadow: "0 0 12px rgba(255,23,68,0.8)",
-                  }}
-                >
-                  BLIND SPOT ▶
-                </div>
-                <div
-                  style={{
-                    fontSize: 22,
-                    fontWeight: 900,
-                    color: "#ff1744",
-                    textShadow: "0 0 16px rgba(255,23,68,0.9)",
-                  }}
-                >
-                  {rightDist}cm
-                </div>
+                <div style={{ fontSize: 10, color: "#ff5252", letterSpacing: "0.12em", textShadow: "0 0 10px rgba(255,23,68,0.8)" }}>BLIND SPOT ▶</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: "#ff1744", textShadow: "0 0 14px rgba(255,23,68,0.9)" }}>{rightDist}cm</div>
               </div>
             )}
 
@@ -377,226 +307,221 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
                 style={{
                   position: "absolute",
                   inset: 0,
-                  background: blinkOn
-                    ? "rgba(255,23,68,0.18)"
-                    : "rgba(60,0,0,0.25)",
+                  background: blinkOn ? "rgba(255,23,68,0.16)" : "rgba(50,0,0,0.22)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 8,
                   pointerEvents: "none",
-                  transition: "background 0.4s",
-                  borderRadius: 20,
+                  transition: "background 0.35s",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 900,
-                    color: blinkOn ? "#fff" : "#ff5252",
-                    letterSpacing: "0.2em",
-                    textShadow: "0 0 24px rgba(255,23,68,1)",
-                  }}
-                >
-                  ⚠ EMERGENCY VEHICLE
-                </div>
-                <div style={{ fontSize: 10, color: "#ff9999", letterSpacing: "0.15em" }}>
-                  PULL OVER SAFELY
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 900, color: blinkOn ? "#fff" : "#ff5252", letterSpacing: "0.2em", textShadow: "0 0 20px rgba(255,23,68,1)" }}>⚠ EMERGENCY VEHICLE</div>
+                <div style={{ fontSize: 9, color: "#ff9999", letterSpacing: "0.15em", marginTop: 4 }}>PULL OVER SAFELY</div>
               </div>
             )}
           </div>
 
-          {/* Distance panels */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-            <DistPanel
-              label="LEFT"
-              value={leftDist}
-              alert={leftAlert}
-              blinkOn={blinkOn}
-            />
-            <DistPanel
-              label="RIGHT"
-              value={rightDist}
-              alert={rightAlert}
-              blinkOn={blinkOn}
-            />
+          {/* ── DISTANCE PANELS ──────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+            <DistPanel label="LEFT" value={leftDist} alert={leftAlertFinal} blinkOn={blinkOn} />
+            <DistPanel label="RIGHT" value={rightDist} alert={rightAlertFinal} blinkOn={blinkOn} />
           </div>
 
-          {/* Controls */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
-              gap: 10,
-            }}
-          >
-            <ControlButton
-              label="◀ LEFT"
-              onClick={triggerLeft}
-              active={leftAlert}
-              color="#ff1744"
-            />
-            <ControlButton
-              label="RESET"
-              onClick={reset}
-              active={false}
-              color="#00e5ff"
-              isReset
-            />
-            <ControlButton
-              label="RIGHT ▶"
-              onClick={triggerRight}
-              active={rightAlert}
-              color="#ff1744"
-            />
+          {/* ── ACTION BUTTONS ───────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 8 }}>
+            <CtrlBtn label="◀ LEFT" onClick={triggerLeft} active={leftAlert} color="#ff1744" />
+            <CtrlBtn label="RESET" onClick={reset} color="#00e5ff" isReset />
+            <CtrlBtn label="RIGHT ▶" onClick={triggerRight} active={rightAlert} color="#ff1744" />
           </div>
 
-          {/* Emergency button */}
           <button
             onClick={triggerEmergency}
             style={{
-              marginTop: 10,
               width: "100%",
-              padding: "12px",
-              borderRadius: 10,
-              border: `1.5px solid ${emergency ? "rgba(255,23,68,0.7)" : "rgba(255,23,68,0.2)"}`,
-              background: emergency ? "rgba(255,23,68,0.15)" : "rgba(255,23,68,0.04)",
-              color: emergency ? "#ff1744" : "#5a2a2a",
+              padding: "11px",
+              borderRadius: 9,
+              border: `1.5px solid ${emergency ? "rgba(255,23,68,0.65)" : "rgba(255,23,68,0.18)"}`,
+              background: emergency ? "rgba(255,23,68,0.14)" : "rgba(255,23,68,0.04)",
+              color: emergency ? "#ff1744" : "#4a2020",
               cursor: "pointer",
               fontFamily: "'Orbitron', monospace",
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: 700,
-              letterSpacing: "0.2em",
-              transition: "all 0.3s",
-              boxShadow: emergency ? "0 0 20px rgba(255,23,68,0.25)" : "none",
+              letterSpacing: "0.18em",
+              transition: "all 0.25s",
+              boxShadow: emergency ? "0 0 16px rgba(255,23,68,0.22)" : "none",
+              marginBottom: 20,
             }}
           >
             {emergency ? "⬛ STOP EMERGENCY" : "🚑 TRIGGER EMERGENCY ALERT"}
           </button>
+
+          {/* ── SEPARATOR ────────────────────────────────────────────────────── */}
+          <div
+            style={{
+              height: 1,
+              background: "linear-gradient(to right, transparent, rgba(100,80,200,0.5), rgba(0,229,255,0.4), rgba(100,80,200,0.5), transparent)",
+              marginBottom: 20,
+            }}
+          />
+
+          {/* ── SONAR RADAR ──────────────────────────────────────────────────── */}
+          <SonarRadar
+            leftAlert={leftAlertFinal}
+            rightAlert={rightAlertFinal}
+            leftDist={leftDist}
+            rightDist={rightDist}
+            emergency={emergency}
+            tick={tick}
+          />
+
+          {/* ── SENSOR READOUTS ──────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12, marginBottom: 12 }}>
+            <SensorPanel label="LEFT SENSOR" value={leftDist} alert={leftAlertFinal} blinkOn={blinkOn} />
+            <SensorPanel label="RIGHT SENSOR" value={rightDist} alert={rightAlertFinal} blinkOn={blinkOn} />
+          </div>
+
+          {/* ── SIMULATION CONTROLS ──────────────────────────────────────────── */}
+          <div
+            style={{
+              background: "#0a0a12",
+              border: "1px solid #14141e",
+              borderRadius: 12,
+              padding: "16px",
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ fontSize: 9, color: "#3a3a5a", letterSpacing: "0.22em", marginBottom: 14 }}>
+              SIMULATION CONTROLS
+            </div>
+            <SliderRow
+              label="Left Sensor Distance"
+              value={leftDist}
+              onChange={(v) => { setLeftDist(v); setLeftAlert(v < 50); }}
+              alert={leftAlertFinal}
+            />
+            <SliderRow
+              label="Right Sensor Distance"
+              value={rightDist}
+              onChange={(v) => { setRightDist(v); setRightAlert(v < 50); }}
+              alert={rightAlertFinal}
+            />
+          </div>
+
+          {/* ── SIREN BUTTONS ────────────────────────────────────────────────── */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <button
+              onClick={triggerSiren}
+              style={{
+                padding: "13px",
+                borderRadius: 9,
+                border: `1.5px solid ${sirenActive ? "rgba(255,23,68,0.6)" : "#1e1e2e"}`,
+                background: sirenActive ? "rgba(255,23,68,0.12)" : "#0a0a12",
+                color: sirenActive ? "#ff1744" : "#c0c0d8",
+                cursor: "pointer",
+                fontFamily: "'Orbitron', monospace",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                transition: "all 0.25s",
+                boxShadow: sirenActive ? "0 0 18px rgba(255,23,68,0.22)" : "none",
+              }}
+            >
+              🚨 TRIGGER SIREN
+            </button>
+            <button
+              onClick={stopSiren}
+              style={{
+                padding: "13px",
+                borderRadius: 9,
+                border: `1.5px solid ${!sirenActive ? "rgba(255,145,0,0.5)" : "#1e1e2e"}`,
+                background: !sirenActive ? "rgba(255,145,0,0.1)" : "#0a0a12",
+                color: !sirenActive ? "#ff9100" : "#4a4a6a",
+                cursor: "pointer",
+                fontFamily: "'Orbitron', monospace",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.15em",
+                transition: "all 0.25s",
+              }}
+            >
+              🔕 STOP HORN
+            </button>
+          </div>
         </main>
       ) : (
-        <main style={{ maxWidth: 860, margin: "0 auto", padding: "20px 16px" }}>
-          <ArchitectureTab />
+        <main style={{ maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
+          <ArchTab />
         </main>
       )}
 
-      <footer
-        style={{
-          textAlign: "center",
-          padding: "16px",
-          borderTop: "1px solid #10101a",
-          fontSize: 9,
-          color: "#20202e",
-          letterSpacing: "0.15em",
-          marginTop: 8,
-        }}
-      >
-        ECHOLENS © 2026 — ESP32 + Edge Impulse TinyML + ThingSpeak IoT + FreeRTOS
-      </footer>
-
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
-        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
       `}</style>
     </div>
   );
 }
 
-function DistPanel({
-  label,
-  value,
-  alert,
-  blinkOn,
-}: {
-  label: string;
-  value: number;
-  alert: boolean;
-  blinkOn: boolean;
-}) {
-  const color = alert ? "#ff1744" : value < 100 ? "#ffd600" : "#00e676";
+/* ── Sub-components ─────────────────────────────────────────────────────────── */
 
+function DistPanel({ label, value, alert, blinkOn }: { label: string; value: number; alert: boolean; blinkOn: boolean }) {
+  const color = alert ? "#ff1744" : value < 100 ? "#ffd600" : "#00e676";
   return (
     <div
       style={{
         background: "#0a0a12",
-        border: `1.5px solid ${alert ? (blinkOn ? "rgba(255,23,68,0.7)" : "rgba(80,0,0,0.6)") : "#14141e"}`,
-        borderRadius: 12,
-        padding: "16px",
+        border: `1.5px solid ${alert ? (blinkOn ? "rgba(255,23,68,0.65)" : "rgba(80,0,0,0.5)") : "#14141e"}`,
+        borderRadius: 10,
+        padding: "14px 12px",
         textAlign: "center",
-        boxShadow: alert && blinkOn ? "0 0 24px rgba(255,23,68,0.25)" : "none",
+        boxShadow: alert && blinkOn ? "0 0 20px rgba(255,23,68,0.22)" : "none",
         transition: "all 0.3s",
       }}
     >
-      <div style={{ fontSize: 9, color: "#3a3a5a", letterSpacing: "0.22em", marginBottom: 8 }}>
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: 44,
-          fontWeight: 900,
-          color,
-          textShadow: `0 0 16px ${color}80`,
-          lineHeight: 1,
-          transition: "color 0.3s",
-        }}
-      >
-        {value}
-      </div>
-      <div style={{ fontSize: 10, color: "#3a3a5a", marginTop: 4 }}>cm</div>
-      {alert && (
-        <div
-          style={{
-            marginTop: 8,
-            fontSize: 9,
-            color: blinkOn ? "#ffd600" : "#ff5252",
-            letterSpacing: "0.15em",
-            fontWeight: 700,
-          }}
-        >
-          ⚠ BLIND SPOT
-        </div>
-      )}
+      <div style={{ fontSize: 8, color: "#3a3a5a", letterSpacing: "0.22em", marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 42, fontWeight: 900, color, textShadow: `0 0 14px ${color}80`, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 3 }}>CM</div>
     </div>
   );
 }
 
-function ControlButton({
-  label,
-  onClick,
-  active,
-  color,
-  isReset,
-}: {
-  label: string;
-  onClick: () => void;
-  active: boolean;
-  color: string;
-  isReset?: boolean;
-}) {
+function SensorPanel({ label, value, alert, blinkOn }: { label: string; value: number; alert: boolean; blinkOn: boolean }) {
+  const color = alert ? "#ff1744" : value < 100 ? "#ffd600" : "#00e676";
+  return (
+    <div
+      style={{
+        background: "#0a0a12",
+        border: `1px solid ${alert ? "rgba(255,23,68,0.3)" : "#14141e"}`,
+        borderRadius: 10,
+        padding: "16px",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: 8, color: "#3a3a5a", letterSpacing: "0.2em", marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 46, fontWeight: 900, color, textShadow: `0 0 16px ${color}80`, lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 4 }}>cm</div>
+    </div>
+  );
+}
+
+function CtrlBtn({ label, onClick, active, color, isReset }: { label: string; onClick: () => void; active?: boolean; color: string; isReset?: boolean }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: "13px 8px",
-        borderRadius: 10,
-        border: `1.5px solid ${isReset ? "rgba(0,229,255,0.3)" : active ? `${color}90` : `${color}25`}`,
-        background: isReset
-          ? "rgba(0,229,255,0.06)"
-          : active
-          ? `${color}18`
-          : `${color}06`,
-        color: isReset ? "#00e5ff" : active ? color : `${color}60`,
+        padding: "11px 6px",
+        borderRadius: 9,
+        border: `1.5px solid ${isReset ? "rgba(0,229,255,0.35)" : active ? `${color}80` : `${color}22`}`,
+        background: isReset ? "rgba(0,229,255,0.07)" : active ? `${color}16` : `${color}05`,
+        color: isReset ? "#00e5ff" : active ? color : `${color}55`,
         cursor: "pointer",
         fontFamily: "'Orbitron', monospace",
         fontSize: 10,
         fontWeight: 700,
-        letterSpacing: "0.18em",
-        transition: "all 0.25s",
-        boxShadow: active ? `0 0 16px ${color}30` : isReset ? "0 0 12px rgba(0,229,255,0.1)" : "none",
+        letterSpacing: "0.14em",
+        transition: "all 0.22s",
+        boxShadow: active ? `0 0 14px ${color}28` : isReset ? "0 0 10px rgba(0,229,255,0.08)" : "none",
       }}
     >
       {label}
@@ -604,95 +529,104 @@ function ControlButton({
   );
 }
 
-function ArchitectureTab() {
-  const boxStyle = (color: string) => ({
-    padding: "10px 14px",
-    borderRadius: 10,
-    border: `1.5px solid ${color}40`,
-    background: `${color}0a`,
-    fontSize: 10,
+function SliderRow({ label, value, onChange, alert }: { label: string; value: number; onChange: (v: number) => void; alert: boolean }) {
+  const color = alert ? "#ff1744" : "#00e5ff";
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+        <span style={{ fontSize: 9, color: "#5a5a7a", fontFamily: "'JetBrains Mono', monospace" }}>{label}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color, fontFamily: "'Orbitron', monospace" }}>{value} cm</span>
+      </div>
+      <input
+        type="range"
+        min={5}
+        max={200}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{
+          width: "100%",
+          height: 4,
+          borderRadius: 2,
+          appearance: "none",
+          cursor: "pointer",
+          background: `linear-gradient(to right, ${color} ${((value - 5) / 195) * 100}%, #1e1e2e ${((value - 5) / 195) * 100}%)`,
+          accentColor: color,
+        }}
+      />
+    </div>
+  );
+}
+
+function ArchTab() {
+  const box = (color: string) => ({
+    padding: "10px 12px",
+    borderRadius: 9,
+    border: `1.5px solid ${color}38`,
+    background: `${color}08`,
+    fontSize: 9,
     color: "#c0c0d8",
     textAlign: "center" as const,
     flex: 1,
-    minWidth: 90,
+    minWidth: 80,
   });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {/* Kart 1 */}
-      <div
-        style={{
-          background: "#0a0a12",
-          border: "1px solid #14141e",
-          borderRadius: 16,
-          padding: 20,
-        }}
-      >
-        <div style={{ fontSize: 11, color: "#ffab00", letterSpacing: "0.18em", marginBottom: 14, fontWeight: 700 }}>
-          KART 1 — SENSOR UNIT (ESP32)
+      {[
+        {
+          title: "KART 1 — SENSOR UNIT (ESP32)",
+          color: "#ffab00",
+          items: [
+            { icon: "🎤", label: "PDM Mic", sub: "TinyML Audio" },
+            { icon: "📡", label: "Ultrasonic", sub: "L + R HC-SR04" },
+            { icon: "🛰", label: "GPS NEO-6M", sub: "UART 9600" },
+            { icon: "🔊", label: "Buzzer", sub: "PWM 2kHz" },
+          ],
+        },
+        {
+          title: "KART 2 — DISPLAY UNIT (ESP32)",
+          color: "#00e5ff",
+          items: [
+            { icon: "🖥", label: "TFT Display", sub: "ILI9341 SPI" },
+            { icon: "📶", label: "WiFi", sub: "ThingSpeak" },
+            { icon: "⚡", label: "FreeRTOS", sub: "Dual Core" },
+            { icon: "🔔", label: "Alerts", sub: "Visual + Buzzer" },
+          ],
+        },
+      ].map((section) => (
+        <div key={section.title} style={{ background: "#0a0a12", border: "1px solid #14141e", borderRadius: 14, padding: 18 }}>
+          <div style={{ fontSize: 10, color: section.color, letterSpacing: "0.18em", marginBottom: 12, fontWeight: 700 }}>
+            {section.title}
+          </div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {section.items.map((item) => (
+              <div key={item.label} style={box(section.color)}>
+                <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
+                <div style={{ fontWeight: 600 }}>{item.label}</div>
+                <div style={{ fontSize: 8, color: "#3a3a5a", marginTop: 2 }}>{item.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-          <div style={boxStyle("#00e5ff")}>🎤 PDM Mic<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>TinyML Audio</span></div>
-          <div style={boxStyle("#00e676")}>📡 Ultrasonic<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>L + R Sensors</span></div>
-          <div style={boxStyle("#ff9100")}>🛰 GPS<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>NEO-6M</span></div>
-          <div style={boxStyle("#ffd600")}>🔊 Buzzer<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>Alert Sound</span></div>
+      ))}
+
+      {[
+        { label: "── ESP-NOW 2.4 GHz ──▶ <5ms", color: "#ffab00" },
+        { label: "── WiFi / HTTP POST ──▶ 15s", color: "#00e676" },
+      ].map((arr) => (
+        <div key={arr.label} style={{ textAlign: "center", fontSize: 10, color: arr.color, letterSpacing: "0.1em" }}>
+          {arr.label}
         </div>
-      </div>
+      ))}
 
-      <div style={{ textAlign: "center", color: "#ffab00", fontSize: 11, letterSpacing: "0.1em" }}>
-        ── ESP-NOW (Wireless, &lt;5ms) ──▶
-      </div>
-
-      {/* Kart 2 */}
-      <div
-        style={{
-          background: "#0a0a12",
-          border: "1px solid #14141e",
-          borderRadius: 16,
-          padding: 20,
-        }}
-      >
-        <div style={{ fontSize: 11, color: "#00e5ff", letterSpacing: "0.18em", marginBottom: 14, fontWeight: 700 }}>
-          KART 2 — DISPLAY UNIT (ESP32)
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-          <div style={boxStyle("#ff9100")}>🖥 TFT Display<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>ILI9341 320×240</span></div>
-          <div style={boxStyle("#00e676")}>📶 WiFi<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>ThingSpeak IoT</span></div>
-          <div style={boxStyle("#00e5ff")}>⚡ FreeRTOS<br /><span style={{ fontSize: 9, color: "#3a3a5a" }}>Dual Core</span></div>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", color: "#00e676", fontSize: 11, letterSpacing: "0.1em" }}>
-        ── WiFi / HTTP ──▶
-      </div>
-
-      {/* Cloud */}
-      <div
-        style={{
-          background: "#0a0a12",
-          border: "1px solid rgba(0,230,118,0.2)",
-          borderRadius: 16,
-          padding: 20,
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontSize: 14, marginBottom: 4 }}>☁</div>
-        <div style={{ fontSize: 11, color: "#00e676", letterSpacing: "0.18em", fontWeight: 700 }}>THINGSPEAK CLOUD</div>
+      <div style={{ background: "#0a0a12", border: "1px solid rgba(0,230,118,0.2)", borderRadius: 14, padding: 18, textAlign: "center" }}>
+        <div style={{ fontSize: 18, marginBottom: 6 }}>☁</div>
+        <div style={{ fontSize: 10, color: "#00e676", letterSpacing: "0.18em", fontWeight: 700 }}>THINGSPEAK CLOUD</div>
         <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 4 }}>Dashboard + Analytics + MATLAB Visualizations</div>
       </div>
 
-      {/* Audio classes */}
-      <div
-        style={{
-          background: "#0a0a12",
-          border: "1px solid #14141e",
-          borderRadius: 16,
-          padding: 16,
-        }}
-      >
-        <div style={{ fontSize: 9, color: "#3a3a5a", letterSpacing: "0.2em", marginBottom: 10 }}>
-          TINYML AUDIO CLASSIFICATION
-        </div>
+      <div style={{ background: "#0a0a12", border: "1px solid #14141e", borderRadius: 14, padding: 16 }}>
+        <div style={{ fontSize: 8, color: "#3a3a5a", letterSpacing: "0.2em", marginBottom: 10 }}>TINYML AUDIO CLASSIFICATION</div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
           {[
             { icon: "🚨", label: "emergency", color: "#ff1744" },
@@ -700,17 +634,7 @@ function ArchitectureTab() {
             { icon: "🚗", label: "traffic", color: "#ff9100" },
             { icon: "🔇", label: "silent", color: "#4a4a6a" },
           ].map((c) => (
-            <span
-              key={c.label}
-              style={{
-                fontSize: 10,
-                padding: "4px 10px",
-                borderRadius: 6,
-                background: `${c.color}18`,
-                color: c.color,
-                border: `1px solid ${c.color}30`,
-              }}
-            >
+            <span key={c.label} style={{ fontSize: 10, padding: "4px 10px", borderRadius: 6, background: `${c.color}16`, color: c.color, border: `1px solid ${c.color}28` }}>
               {c.icon} {c.label}
             </span>
           ))}
