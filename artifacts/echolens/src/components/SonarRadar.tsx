@@ -7,15 +7,17 @@ interface Props {
   rightDist: number;
   emergency: boolean;
   emergencyType?: "ambulance" | "other";
+  hornDetected?: boolean;
   tick: number;
 }
 
-export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType, tick }: Props) {
+export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType, hornDetected, tick }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sweepRef = useRef(0);
   const animRef = useRef(0);
   const sysTickRef = useRef(Date.now());
   const ambulanceProgressRef = useRef(0);
+  const hornProgressRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,6 +28,11 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
     // Reset approach animation each time ambulance state activates
     if (emergency && emergencyType === "ambulance") {
       ambulanceProgressRef.current = 0;
+    }
+
+    // Reset horn approach animation each time horn state activates
+    if (hornDetected) {
+      hornProgressRef.current = 0;
     }
 
     let frame = 0;
@@ -375,6 +382,77 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
         ctx.fillText("▲ REAR ALERT", cx, dotY + dotR + 13);
       }
 
+      // ── HORN ALERT (one-time yellow dot approaching from rear) ────────────────
+      if (hornDetected) {
+        const carH = 36;
+        const restY  = cy + carH / 2 + 32;
+        const startY = cy + maxR * 0.93;
+
+        // Advance progress once — clamps at 1, never loops
+        if (hornProgressRef.current < 1) {
+          hornProgressRef.current = Math.min(1, hornProgressRef.current + 1 / 220);
+        }
+        const t = hornProgressRef.current;
+        const easedT = 1 - Math.pow(1 - t, 3);
+        const dotY = startY + (restY - startY) * easedT;
+        const dotX  = cx;
+        const dotR  = 6;
+
+        // Gentle pulse — slow sine, no harsh flickering
+        const pulse = 0.55 + 0.45 * Math.sin(frame * 0.05);
+
+        // Motion trail while still approaching
+        if (t < 1) {
+          const trailSteps = 5;
+          for (let i = 1; i <= trailSteps; i++) {
+            const tBack    = Math.max(0, t - (i / trailSteps) * 0.3);
+            const easedBack = 1 - Math.pow(1 - tBack, 3);
+            const trailY   = startY + (restY - startY) * easedBack;
+            const alpha    = (1 - i / trailSteps) * 0.22;
+            ctx.beginPath();
+            ctx.arc(dotX, trailY, dotR * 0.55, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,210,0,${alpha})`;
+            ctx.fill();
+          }
+        }
+
+        // Outer ambient halo
+        const haloR = 40 + pulse * 12;
+        const halo = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, haloR);
+        halo.addColorStop(0,   `rgba(255,210,0,${0.20 + pulse * 0.14})`);
+        halo.addColorStop(0.5, `rgba(255,210,0,${0.07 + pulse * 0.05})`);
+        halo.addColorStop(1,   "transparent");
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(dotX, dotY, haloR, 0, Math.PI * 2); ctx.fill();
+
+        // Mid bloom
+        const midR = 15 + pulse * 5;
+        const mid = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, midR);
+        mid.addColorStop(0, `rgba(255,210,0,${0.70 + pulse * 0.25})`);
+        mid.addColorStop(1, "transparent");
+        ctx.fillStyle = mid;
+        ctx.beginPath(); ctx.arc(dotX, dotY, midR, 0, Math.PI * 2); ctx.fill();
+
+        // Core dot — fixed radius
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgb(255,210,0)`;
+        ctx.fill();
+
+        // Specular highlight
+        ctx.beginPath();
+        ctx.arc(dotX - 1.5, dotY - 1.5, dotR * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,200,${0.45 + pulse * 0.4})`;
+        ctx.fill();
+
+        // "▲ HORN DETECTED" label — fades in during last 50% of approach
+        const labelAlpha = Math.min(1, Math.max(0, (easedT - 0.5) * 2));
+        ctx.fillStyle = `rgba(255,210,0,${labelAlpha * 0.9})`;
+        ctx.font = "bold 8px 'Orbitron', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("▲ HORN DETECTED", dotX, dotY + dotR + 13);
+      }
+
       // ── EGO CAR (top-down) ─────────────────────────────────────────────────
       const carW = 22;
       const carH = 36;
@@ -427,7 +505,7 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
 
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType]);
+  }, [leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType, hornDetected]);
 
   return (
     <div

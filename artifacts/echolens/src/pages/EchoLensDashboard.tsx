@@ -16,6 +16,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [leftAlert, setLeftAlert] = useState(false);
   const [rightAlert, setRightAlert] = useState(false);
   const [emergency, setEmergency] = useState(false);
+  const [hornDetected, setHornDetected] = useState(false);
   const [blinkOn, setBlinkOn] = useState(false);
   const [tick, setTick] = useState(0);
   const [sirenActive, setSirenActive] = useState(false);
@@ -88,6 +89,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     setRightAlert(false);
     setEmergency(false);
     setSirenActive(false);
+    setHornDetected(false);
     setLeftDist(120);
     setRightDist(95);
   }, []);
@@ -402,6 +404,28 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             {emergency ? "⬛ STOP EMERGENCY" : "🚑 TRIGGER EMERGENCY ALERT"}
           </button>
 
+          <button
+            onClick={() => setHornDetected((h) => !h)}
+            style={{
+              width: "100%",
+              padding: "11px",
+              borderRadius: 9,
+              border: `1.5px solid ${hornDetected ? "rgba(255,210,0,0.65)" : "rgba(255,210,0,0.18)"}`,
+              background: hornDetected ? "rgba(255,210,0,0.10)" : "rgba(255,210,0,0.03)",
+              color: hornDetected ? "#ffd600" : "#4a4020",
+              cursor: "pointer",
+              fontFamily: "'Orbitron', monospace",
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              transition: "all 0.25s",
+              boxShadow: hornDetected ? "0 0 16px rgba(255,210,0,0.18)" : "none",
+              marginBottom: 20,
+            }}
+          >
+            {hornDetected ? "⬛ STOP HORN ALERT" : "📯 TRIGGER HORN ALERT"}
+          </button>
+
           {/* ── SEPARATOR ────────────────────────────────────────────────────── */}
           <div
             style={{
@@ -419,6 +443,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             rightDist={rightDist}
             emergency={emergency}
             emergencyType="ambulance"
+            hornDetected={hornDetected}
             tick={tick}
           />
 
