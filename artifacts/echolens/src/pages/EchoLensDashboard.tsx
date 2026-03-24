@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import RealisticRoad from "../components/RealisticRoad";
 import SonarRadar from "../components/SonarRadar";
+import AudioClassifier, { AudioClassification } from "../components/AudioClassifier";
 
 type Tab = "dashboard" | "architecture";
 
@@ -19,7 +20,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [hornDetected, setHornDetected] = useState(false);
   const [blinkOn, setBlinkOn] = useState(false);
   const [tick, setTick] = useState(0);
-  const [sirenActive, setSirenActive] = useState(false);
 
   // Blink + tick timer
   useEffect(() => {
@@ -88,7 +88,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     setLeftAlert(false);
     setRightAlert(false);
     setEmergency(false);
-    setSirenActive(false);
     setHornDetected(false);
     setLeftDist(120);
     setRightDist(95);
@@ -101,14 +100,17 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     });
   }, []);
 
-  const triggerSiren = useCallback(() => {
-    setSirenActive(true);
-    setEmergency(true);
-  }, []);
-
-  const stopSiren = useCallback(() => {
-    setSirenActive(false);
-    setEmergency(false);
+  const handleAudioClassification = useCallback((type: AudioClassification) => {
+    if (type === "ambulance") {
+      setEmergency(true);
+      setHornDetected(false);
+    } else if (type === "horn") {
+      setHornDetected(true);
+      setEmergency(false);
+    } else {
+      setEmergency(false);
+      setHornDetected(false);
+    }
   }, []);
 
   const leftAlertFinal = leftAlert || emergency;
@@ -480,46 +482,8 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             />
           </div>
 
-          {/* ── SIREN BUTTONS ────────────────────────────────────────────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            <button
-              onClick={triggerSiren}
-              style={{
-                padding: "13px",
-                borderRadius: 9,
-                border: `1.5px solid ${sirenActive ? "rgba(255,23,68,0.6)" : "#1e1e2e"}`,
-                background: sirenActive ? "rgba(255,23,68,0.12)" : "#0a0a12",
-                color: sirenActive ? "#ff1744" : "#c0c0d8",
-                cursor: "pointer",
-                fontFamily: "'Orbitron', monospace",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                transition: "all 0.25s",
-                boxShadow: sirenActive ? "0 0 18px rgba(255,23,68,0.22)" : "none",
-              }}
-            >
-              🚨 TRIGGER SIREN
-            </button>
-            <button
-              onClick={stopSiren}
-              style={{
-                padding: "13px",
-                borderRadius: 9,
-                border: `1.5px solid ${!sirenActive ? "rgba(255,145,0,0.5)" : "#1e1e2e"}`,
-                background: !sirenActive ? "rgba(255,145,0,0.1)" : "#0a0a12",
-                color: !sirenActive ? "#ff9100" : "#4a4a6a",
-                cursor: "pointer",
-                fontFamily: "'Orbitron', monospace",
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                transition: "all 0.25s",
-              }}
-            >
-              🔕 STOP HORN
-            </button>
-          </div>
+          {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
+          <AudioClassifier onClassificationChange={handleAudioClassification} />
         </main>
       ) : (
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
