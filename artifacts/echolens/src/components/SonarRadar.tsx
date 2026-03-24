@@ -6,10 +6,11 @@ interface Props {
   leftDist: number;
   rightDist: number;
   emergency: boolean;
+  emergencyType?: "ambulance" | "other";
   tick: number;
 }
 
-export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist, emergency, tick }: Props) {
+export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType, tick }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sweepRef = useRef(0);
   const animRef = useRef(0);
@@ -26,7 +27,6 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
     function draw() {
       if (!canvas || !ctx) return;
       frame++;
-      sweepRef.current = (sweepRef.current + 0.012) % (Math.PI * 2);
 
       const W = canvas.width;
       const H = canvas.height;
@@ -118,133 +118,175 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
       ctx.textAlign = "right";
       ctx.fillText("—270°", cx - maxR - 2, cy + 3);
 
-      // ── SWEEP LINE ────────────────────────────────────────────────────────────
-      const sweep = sweepRef.current - Math.PI / 2; // 0 = top
-      // Trailing sweep glow
-      for (let i = 0; i < 40; i++) {
-        const a = sweep - (i / 40) * (Math.PI * 0.6);
-        const alpha = (1 - i / 40) * 0.18;
+      const isAmbulance = emergency && emergencyType === "ambulance";
+
+      // ── SWEEP LINE (hidden for ambulance mode) ────────────────────────────────
+      if (!isAmbulance) {
+        sweepRef.current = (sweepRef.current + 0.012) % (Math.PI * 2);
+        const sweep = sweepRef.current - Math.PI / 2; // 0 = top
+        for (let i = 0; i < 40; i++) {
+          const a = sweep - (i / 40) * (Math.PI * 0.6);
+          const alpha = (1 - i / 40) * 0.18;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, maxR, a, a + 0.04);
+          ctx.closePath();
+          ctx.fillStyle = `rgba(0,229,255,${alpha})`;
+          ctx.fill();
+        }
         ctx.beginPath();
         ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, maxR, a, a + 0.04);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(0,229,255,${alpha})`;
-        ctx.fill();
+        ctx.lineTo(cx + Math.cos(sweep) * maxR, cy + Math.sin(sweep) * maxR);
+        ctx.strokeStyle = "rgba(0,229,255,0.7)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       }
-      // Main sweep line
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(sweep) * maxR, cy + Math.sin(sweep) * maxR);
-      ctx.strokeStyle = "rgba(0,229,255,0.7)";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
 
-      // ── BLIPS ─────────────────────────────────────────────────────────────────
-      // Convert cm → meters → radar pixels
-      // 200cm = 2m → very close; radar max = 30m
-      // But sensor values are in cm (5–200 range), so scale to 0–200cm = 0–30m (scaled)
-      // We map: 5cm → near center, 200cm → 2/3 of outer ring
+      // ── BLIPS (hidden for ambulance mode) ─────────────────────────────────────
       function distToR(cm: number): number {
-        // Map 0–200cm to 0–maxR * 0.7
         return Math.min(maxR * 0.95, (cm / 200) * maxR * 0.85);
       }
 
-      // Left blip: angle ~270° (left side of car = π in canvas terms since 0=right)
-      if (leftAlert) {
-        const br = distToR(leftDist);
-        const ba = Math.PI; // left = 180° in canvas (since 270° in radar = left)
-        const bx = cx + Math.cos(ba) * br;
-        const by = cy + Math.sin(ba) * br;
-        const blink = Math.sin(frame * 0.2) > 0;
+      if (!isAmbulance) {
+        // Left blip
+        if (leftAlert) {
+          const br = distToR(leftDist);
+          const ba = Math.PI;
+          const bx = cx + Math.cos(ba) * br;
+          const by = cy + Math.sin(ba) * br;
+          const blink = Math.sin(frame * 0.2) > 0;
 
-        // Glow
-        const blipGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 18);
-        blipGlow.addColorStop(0, `rgba(255,23,68,${blink ? 0.7 : 0.3})`);
-        blipGlow.addColorStop(1, "transparent");
-        ctx.fillStyle = blipGlow;
-        ctx.beginPath(); ctx.arc(bx, by, 18, 0, Math.PI * 2); ctx.fill();
+          const blipGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 18);
+          blipGlow.addColorStop(0, `rgba(255,23,68,${blink ? 0.7 : 0.3})`);
+          blipGlow.addColorStop(1, "transparent");
+          ctx.fillStyle = blipGlow;
+          ctx.beginPath(); ctx.arc(bx, by, 18, 0, Math.PI * 2); ctx.fill();
 
-        // Dot
-        ctx.beginPath();
-        ctx.arc(bx, by, 5, 0, Math.PI * 2);
-        ctx.fillStyle = blink ? "#ff1744" : "#ff5252";
-        ctx.fill();
-
-        // Tooltip
-        const ttW = 110;
-        const ttH = 32;
-        const ttX = bx + 10;
-        const ttY = by - ttH / 2;
-        ctx.fillStyle = "rgba(20,14,0,0.9)";
-        ctx.strokeStyle = "#ff9100";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.roundRect(ttX, ttY, ttW, ttH, 4);
-        ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#ffd600";
-        ctx.font = "bold 8px 'Orbitron', monospace";
-        ctx.textAlign = "left";
-        ctx.fillText("[ LEFT OBJECT ]", ttX + 6, ttY + 11);
-        ctx.fillStyle = "#ff9100";
-        ctx.font = "8px 'Orbitron', monospace";
-        ctx.fillText(`DIST: ${leftDist}cm`, ttX + 6, ttY + 23);
-      }
-
-      // Right blip: angle ~0° (right side of car in radar = 0° in canvas)
-      if (rightAlert) {
-        const br = distToR(rightDist);
-        const ba = 0; // right
-        const bx = cx + Math.cos(ba) * br;
-        const by = cy + Math.sin(ba) * br;
-        const blink = Math.sin(frame * 0.2 + 1) > 0;
-
-        const blipGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 18);
-        blipGlow.addColorStop(0, `rgba(255,23,68,${blink ? 0.7 : 0.3})`);
-        blipGlow.addColorStop(1, "transparent");
-        ctx.fillStyle = blipGlow;
-        ctx.beginPath(); ctx.arc(bx, by, 18, 0, Math.PI * 2); ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(bx, by, 5, 0, Math.PI * 2);
-        ctx.fillStyle = blink ? "#ff1744" : "#ff5252";
-        ctx.fill();
-
-        // Tooltip — shift left if near right edge
-        const ttW = 115;
-        const ttH = 32;
-        const ttX = bx - ttW - 10;
-        const ttY = by - ttH / 2;
-        ctx.fillStyle = "rgba(20,14,0,0.9)";
-        ctx.strokeStyle = "#ff9100";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.roundRect(ttX, ttY, ttW, ttH, 4);
-        ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#ffd600";
-        ctx.font = "bold 8px 'Orbitron', monospace";
-        ctx.textAlign = "left";
-        ctx.fillText("[ RIGHT OBJECT ]", ttX + 6, ttY + 11);
-        ctx.fillStyle = "#ff9100";
-        ctx.font = "8px 'Orbitron', monospace";
-        ctx.fillText(`DIST: ${rightDist}cm`, ttX + 6, ttY + 23);
-      }
-
-      // Emergency blip: multiple blips around
-      if (emergency) {
-        const blinkE = Math.sin(frame * 0.25) > 0;
-        [0, 0.8, 1.8, 2.8, 4.2, 5.0].forEach((angle, i) => {
-          const er = maxR * (0.15 + i * 0.06);
-          const ex = cx + Math.cos(angle) * er;
-          const ey = cy + Math.sin(angle) * er;
-          const eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
-          eg.addColorStop(0, `rgba(255,23,68,${blinkE ? 0.9 : 0.3})`);
-          eg.addColorStop(1, "transparent");
-          ctx.fillStyle = eg;
-          ctx.beginPath(); ctx.arc(ex, ey, 14, 0, Math.PI * 2); ctx.fill();
-          ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2);
-          ctx.fillStyle = blinkE ? "#ff1744" : "#880000";
+          ctx.beginPath();
+          ctx.arc(bx, by, 5, 0, Math.PI * 2);
+          ctx.fillStyle = blink ? "#ff1744" : "#ff5252";
           ctx.fill();
-        });
+
+          const ttW = 110;
+          const ttH = 32;
+          const ttX = bx + 10;
+          const ttY = by - ttH / 2;
+          ctx.fillStyle = "rgba(20,14,0,0.9)";
+          ctx.strokeStyle = "#ff9100";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(ttX, ttY, ttW, ttH, 4);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = "#ffd600";
+          ctx.font = "bold 8px 'Orbitron', monospace";
+          ctx.textAlign = "left";
+          ctx.fillText("[ LEFT OBJECT ]", ttX + 6, ttY + 11);
+          ctx.fillStyle = "#ff9100";
+          ctx.font = "8px 'Orbitron', monospace";
+          ctx.fillText(`DIST: ${leftDist}cm`, ttX + 6, ttY + 23);
+        }
+
+        // Right blip
+        if (rightAlert) {
+          const br = distToR(rightDist);
+          const ba = 0;
+          const bx = cx + Math.cos(ba) * br;
+          const by = cy + Math.sin(ba) * br;
+          const blink = Math.sin(frame * 0.2 + 1) > 0;
+
+          const blipGlow = ctx.createRadialGradient(bx, by, 0, bx, by, 18);
+          blipGlow.addColorStop(0, `rgba(255,23,68,${blink ? 0.7 : 0.3})`);
+          blipGlow.addColorStop(1, "transparent");
+          ctx.fillStyle = blipGlow;
+          ctx.beginPath(); ctx.arc(bx, by, 18, 0, Math.PI * 2); ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(bx, by, 5, 0, Math.PI * 2);
+          ctx.fillStyle = blink ? "#ff1744" : "#ff5252";
+          ctx.fill();
+
+          const ttW = 115;
+          const ttH = 32;
+          const ttX = bx - ttW - 10;
+          const ttY = by - ttH / 2;
+          ctx.fillStyle = "rgba(20,14,0,0.9)";
+          ctx.strokeStyle = "#ff9100";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.roundRect(ttX, ttY, ttW, ttH, 4);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = "#ffd600";
+          ctx.font = "bold 8px 'Orbitron', monospace";
+          ctx.textAlign = "left";
+          ctx.fillText("[ RIGHT OBJECT ]", ttX + 6, ttY + 11);
+          ctx.fillStyle = "#ff9100";
+          ctx.font = "8px 'Orbitron', monospace";
+          ctx.fillText(`DIST: ${rightDist}cm`, ttX + 6, ttY + 23);
+        }
+
+        // Multi-blip emergency (non-ambulance)
+        if (emergency) {
+          const blinkE = Math.sin(frame * 0.25) > 0;
+          [0, 0.8, 1.8, 2.8, 4.2, 5.0].forEach((angle, i) => {
+            const er = maxR * (0.15 + i * 0.06);
+            const ex = cx + Math.cos(angle) * er;
+            const ey = cy + Math.sin(angle) * er;
+            const eg = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
+            eg.addColorStop(0, `rgba(255,23,68,${blinkE ? 0.9 : 0.3})`);
+            eg.addColorStop(1, "transparent");
+            ctx.fillStyle = eg;
+            ctx.beginPath(); ctx.arc(ex, ey, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2);
+            ctx.fillStyle = blinkE ? "#ff1744" : "#880000";
+            ctx.fill();
+          });
+        }
+      }
+
+      // ── AMBULANCE REAR ALERT (single pulsing dot behind car) ──────────────────
+      if (isAmbulance) {
+        // Smooth pulse: sine wave gives a natural glow intensity cycle
+        const pulse = 0.5 + 0.5 * Math.sin(frame * 0.07);
+        const carH = 36;
+        // Place the alert dot below the car centre (rear of car)
+        const dotY = cy + carH / 2 + 28;
+        const dotX = cx;
+
+        // Outer ambient glow — large, soft halo
+        const haloR = 52 + pulse * 18;
+        const halo = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, haloR);
+        halo.addColorStop(0, `rgba(255,23,68,${0.22 + pulse * 0.18})`);
+        halo.addColorStop(0.45, `rgba(255,23,68,${0.10 + pulse * 0.08})`);
+        halo.addColorStop(1, "transparent");
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(dotX, dotY, haloR, 0, Math.PI * 2); ctx.fill();
+
+        // Mid glow ring
+        const midR = 24 + pulse * 8;
+        const mid = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, midR);
+        mid.addColorStop(0, `rgba(255,80,80,${0.6 + pulse * 0.35})`);
+        mid.addColorStop(1, "transparent");
+        ctx.fillStyle = mid;
+        ctx.beginPath(); ctx.arc(dotX, dotY, midR, 0, Math.PI * 2); ctx.fill();
+
+        // Core dot
+        const coreR = 5 + pulse * 3;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, coreR, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,${Math.round(30 + pulse * 40)},${Math.round(50 + pulse * 30)},1)`;
+        ctx.fill();
+
+        // Bright centre highlight
+        ctx.beginPath();
+        ctx.arc(dotX - 1, dotY - 1, coreR * 0.35, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,200,200,${0.5 + pulse * 0.4})`;
+        ctx.fill();
+
+        // "REAR ALERT" label below the dot
+        ctx.fillStyle = `rgba(255,23,68,${0.55 + pulse * 0.45})`;
+        ctx.font = "bold 8px 'Orbitron', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("▲ REAR ALERT", dotX, dotY + coreR + 14);
       }
 
       // ── EGO CAR (top-down) ─────────────────────────────────────────────────
@@ -299,7 +341,7 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
 
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [leftAlert, rightAlert, leftDist, rightDist, emergency]);
+  }, [leftAlert, rightAlert, leftDist, rightDist, emergency, emergencyType]);
 
   return (
     <div

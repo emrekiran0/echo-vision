@@ -418,6 +418,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             leftDist={leftDist}
             rightDist={rightDist}
             emergency={emergency}
+            emergencyType="ambulance"
             tick={tick}
           />
 
