@@ -249,108 +249,130 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
         }
       }
 
-      // ── AMBULANCE REAR ALERT (approaching red/blue flashing light) ────────────
+      // ── AMBULANCE REAR ALERT (one-time approach, two side-by-side lights) ───────
       if (isAmbulance) {
         const carH = 36;
-        // Resting position: just behind the car
-        const restY = cy + carH / 2 + 30;
-        // Start position: near the outer radar edge (bottom)
-        const startY = cy + maxR * 0.92;
+        // Resting position: directly behind the car
+        const restY = cy + carH / 2 + 32;
+        // Start position: outer radar edge (bottom)
+        const startY = cy + maxR * 0.93;
 
-        // Advance approach progress: 0 → 1 over ~140 frames (ease-out cubic)
+        // Advance progress once — clamps at 1 and never moves again
         if (ambulanceProgressRef.current < 1) {
-          ambulanceProgressRef.current = Math.min(1, ambulanceProgressRef.current + 1 / 140);
+          ambulanceProgressRef.current = Math.min(1, ambulanceProgressRef.current + 1 / 220);
         }
         const t = ambulanceProgressRef.current;
-        // Cubic ease-out: fast at start, slows to a stop
+        // Cubic ease-out: arrives fast, decelerates smoothly to rest
         const easedT = 1 - Math.pow(1 - t, 3);
-
-        const dotX = cx;
         const dotY = startY + (restY - startY) * easedT;
 
-        // Pulse intensity (independent of approach)
-        const pulse = 0.5 + 0.5 * Math.sin(frame * 0.12);
+        // Fixed dot size — no size variation so the two dots stay equal
+        const dotR = 6;
+        const spacing = dotR + 5; // gap between red and blue centres
 
-        // Red / blue alternating flash — switches every 10 frames
-        const flashCycle = Math.floor(frame / 10) % 2;
-        const isRedPhase = flashCycle === 0;
-        const lr = isRedPhase ? 255 : 30;
-        const lg = isRedPhase ? 23 : 120;
-        const lb = isRedPhase ? 68 : 255;
-        // Secondary color (opposite phase, smaller dot beside it)
-        const sr = isRedPhase ? 30 : 255;
-        const sg = isRedPhase ? 120 : 23;
-        const sb = isRedPhase ? 255 : 68;
+        const redX = cx - spacing;
+        const blueX = cx + spacing;
 
-        // Motion trail — fading dots leading from where it came
+        // Independent gentle pulses — offset by π/2 so they breathe alternately
+        // Slower frequency (0.05) = no harsh flickering
+        const pulseRed  = 0.55 + 0.45 * Math.sin(frame * 0.05);
+        const pulseBlue = 0.55 + 0.45 * Math.sin(frame * 0.05 + Math.PI / 2);
+
+        // Motion trail while still approaching
         if (t < 1) {
-          const trailSteps = 6;
+          const trailSteps = 5;
           for (let i = 1; i <= trailSteps; i++) {
-            const tBack = Math.max(0, t - (i / trailSteps) * 0.35);
+            const tBack = Math.max(0, t - (i / trailSteps) * 0.3);
             const easedBack = 1 - Math.pow(1 - tBack, 3);
             const trailY = startY + (restY - startY) * easedBack;
-            const trailAlpha = (1 - i / trailSteps) * 0.25;
+            const alpha = (1 - i / trailSteps) * 0.2;
+            // Red trail
             ctx.beginPath();
-            ctx.arc(dotX, trailY, 4 - i * 0.4, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,80,80,${trailAlpha})`;
+            ctx.arc(redX, trailY, dotR * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,30,60,${alpha})`;
+            ctx.fill();
+            // Blue trail
+            ctx.beginPath();
+            ctx.arc(blueX, trailY, dotR * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(30,120,255,${alpha})`;
             ctx.fill();
           }
         }
 
-        // Outer ambient halo — blends both colors
-        const haloR = 48 + pulse * 16;
-        const halo = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, haloR);
-        halo.addColorStop(0, `rgba(${lr},${lg},${lb},${0.28 + pulse * 0.16})`);
-        halo.addColorStop(0.5, `rgba(${lr},${lg},${lb},${0.08 + pulse * 0.06})`);
-        halo.addColorStop(1, "transparent");
-        ctx.fillStyle = halo;
-        ctx.beginPath(); ctx.arc(dotX, dotY, haloR, 0, Math.PI * 2); ctx.fill();
+        // Helper: draw one light (core + mid glow + outer halo)
+        function drawLight(lx: number, ly: number, r: number, gr: number, gb: number, pulse: number) {
+          // Outer halo
+          const haloR = 36 + pulse * 10;
+          const halo = ctx.createRadialGradient(lx, ly, 0, lx, ly, haloR);
+          halo.addColorStop(0, `rgba(${255},${gr},${gb},${0.18 + pulse * 0.12})`);
+          halo.addColorStop(0.5, `rgba(${255},${gr},${gb},${0.06 + pulse * 0.04})`);
+          halo.addColorStop(1, "transparent");
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(lx, ly, haloR, 0, Math.PI * 2); ctx.fill();
 
-        // Mid glow
-        const midR = 20 + pulse * 7;
-        const mid = ctx.createRadialGradient(dotX, dotY, 0, dotX, dotY, midR);
-        mid.addColorStop(0, `rgba(${lr},${lg},${lb},${0.7 + pulse * 0.3})`);
-        mid.addColorStop(1, "transparent");
-        ctx.fillStyle = mid;
-        ctx.beginPath(); ctx.arc(dotX, dotY, midR, 0, Math.PI * 2); ctx.fill();
+          // Mid bloom
+          const midR = 14 + pulse * 5;
+          const mid = ctx.createRadialGradient(lx, ly, 0, lx, ly, midR);
+          mid.addColorStop(0, `rgba(${255},${gr},${gb},${0.65 + pulse * 0.25})`);
+          mid.addColorStop(1, "transparent");
+          ctx.fillStyle = mid;
+          ctx.beginPath(); ctx.arc(lx, ly, midR, 0, Math.PI * 2); ctx.fill();
 
-        // Core dot — main color
-        const coreR = 6 + pulse * 2.5;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, coreR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgb(${lr},${lg},${lb})`;
-        ctx.fill();
+          // Core dot — fixed radius, no size pulsing
+          ctx.beginPath();
+          ctx.arc(lx, ly, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgb(${255},${gr},${gb})`;
+          ctx.fill();
 
-        // Bright inner highlight
-        ctx.beginPath();
-        ctx.arc(dotX - 1, dotY - 1.5, coreR * 0.38, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${0.45 + pulse * 0.45})`;
-        ctx.fill();
+          // Specular highlight (top-left of core)
+          ctx.beginPath();
+          ctx.arc(lx - 1.5, ly - 1.5, r * 0.35, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${0.4 + pulse * 0.4})`;
+          ctx.fill();
+        }
 
-        // Small secondary-color accent dot (offset slightly)
-        const accentR = 3 + pulse * 1.5;
-        ctx.beginPath();
-        ctx.arc(dotX + coreR + accentR + 1, dotY, accentR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${sr},${sg},${sb},${0.6 + pulse * 0.4})`;
-        ctx.fill();
-        // Accent glow
-        const accentGlow = ctx.createRadialGradient(
-          dotX + coreR + accentR + 1, dotY, 0,
-          dotX + coreR + accentR + 1, dotY, accentR + 8
-        );
-        accentGlow.addColorStop(0, `rgba(${sr},${sg},${sb},${0.35 + pulse * 0.2})`);
-        accentGlow.addColorStop(1, "transparent");
-        ctx.fillStyle = accentGlow;
-        ctx.beginPath();
-        ctx.arc(dotX + coreR + accentR + 1, dotY, accentR + 8, 0, Math.PI * 2);
-        ctx.fill();
+        // Red light  (rgb 255, 23, 68)
+        drawLight(redX,  dotY, dotR, 23,  68,  pulseRed);
+        // Blue light (rgb 255 is wrong — swap to proper blue: 30, 120, 255)
+        // We need a blue helper with full blue channel — handle separately
+        // Blue: draw with actual blue
+        (() => {
+          const lx = blueX;
+          const ly = dotY;
+          const pulse = pulseBlue;
 
-        // "▲ REAR ALERT" label — fades in as the dot approaches
-        const labelAlpha = Math.min(1, easedT * 2);
-        ctx.fillStyle = `rgba(${lr},${lg},${lb},${labelAlpha * (0.6 + pulse * 0.4)})`;
+          const haloR = 36 + pulse * 10;
+          const halo = ctx.createRadialGradient(lx, ly, 0, lx, ly, haloR);
+          halo.addColorStop(0, `rgba(30,100,255,${0.18 + pulse * 0.12})`);
+          halo.addColorStop(0.5, `rgba(30,100,255,${0.06 + pulse * 0.04})`);
+          halo.addColorStop(1, "transparent");
+          ctx.fillStyle = halo;
+          ctx.beginPath(); ctx.arc(lx, ly, haloR, 0, Math.PI * 2); ctx.fill();
+
+          const midR = 14 + pulse * 5;
+          const mid = ctx.createRadialGradient(lx, ly, 0, lx, ly, midR);
+          mid.addColorStop(0, `rgba(30,100,255,${0.65 + pulse * 0.25})`);
+          mid.addColorStop(1, "transparent");
+          ctx.fillStyle = mid;
+          ctx.beginPath(); ctx.arc(lx, ly, midR, 0, Math.PI * 2); ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(lx, ly, dotR, 0, Math.PI * 2);
+          ctx.fillStyle = `rgb(30,100,255)`;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(lx - 1.5, ly - 1.5, dotR * 0.35, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${0.4 + pulse * 0.4})`;
+          ctx.fill();
+        })();
+
+        // "▲ REAR ALERT" label — fades in during final 50% of approach
+        const labelAlpha = Math.min(1, Math.max(0, (easedT - 0.5) * 2));
+        ctx.fillStyle = `rgba(255,60,60,${labelAlpha * 0.85})`;
         ctx.font = "bold 8px 'Orbitron', monospace";
         ctx.textAlign = "center";
-        ctx.fillText("▲ REAR ALERT", dotX, dotY + coreR + 14);
+        ctx.fillText("▲ REAR ALERT", cx, dotY + dotR + 13);
       }
 
       // ── EGO CAR (top-down) ─────────────────────────────────────────────────
