@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import RealisticRoad from "../components/RealisticRoad";
 import SonarRadar from "../components/SonarRadar";
 
@@ -20,6 +20,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [tick, setTick] = useState(0);
   const [sirenActive, setSirenActive] = useState(false);
 
+  // Blink + tick timer
   useEffect(() => {
     const iv = setInterval(() => {
       setBlinkOn((b) => !b);
@@ -28,15 +29,59 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     return () => clearInterval(iv);
   }, []);
 
-  const triggerLeft = useCallback(() => {
-    setLeftAlert(true);
-    setLeftDist(28);
+  // Random fluctuation when no alert is active
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setLeftAlert((la) => {
+        if (!la) {
+          setLeftDist((d) => {
+            const next = d + (Math.random() * 10 - 5);
+            return Math.round(Math.max(60, Math.min(180, next)));
+          });
+        }
+        return la;
+      });
+      setRightAlert((ra) => {
+        if (!ra) {
+          setRightDist((d) => {
+            const next = d + (Math.random() * 10 - 5);
+            return Math.round(Math.max(60, Math.min(180, next)));
+          });
+        }
+        return ra;
+      });
+    }, 600);
+    return () => clearInterval(iv);
   }, []);
 
-  const triggerRight = useCallback(() => {
-    setRightAlert(true);
-    setRightDist(32);
+  // Animate distance down to 50 when alert triggered
+  const animateDown = useCallback((
+    setter: Dispatch<SetStateAction<number>>,
+    alertSetter: Dispatch<SetStateAction<boolean>>,
+    current: number
+  ) => {
+    let val = current;
+    const step = () => {
+      val = Math.max(50, val - Math.ceil((val - 50) * 0.25 + 2));
+      setter(val);
+      if (val > 50) {
+        setTimeout(step, 60);
+      } else {
+        alertSetter(true);
+      }
+    };
+    step();
   }, []);
+
+  const triggerLeft = useCallback(() => {
+    setLeftAlert(false);
+    setLeftDist((d) => { animateDown(setLeftDist, setLeftAlert, d); return d; });
+  }, [animateDown]);
+
+  const triggerRight = useCallback(() => {
+    setRightAlert(false);
+    setRightDist((d) => { animateDown(setRightDist, setRightAlert, d); return d; });
+  }, [animateDown]);
 
   const reset = useCallback(() => {
     setLeftAlert(false);
