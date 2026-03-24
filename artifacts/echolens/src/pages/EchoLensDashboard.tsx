@@ -3,8 +3,13 @@ import RealisticRoad from "../components/RealisticRoad";
 
 type Tab = "dashboard" | "architecture";
 
-export default function EchoLensDashboard() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+interface Props {
+  initialTab?: Tab;
+  onBack?: () => void;
+}
+
+export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: Props) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [leftDist, setLeftDist] = useState(120);
   const [rightDist, setRightDist] = useState(95);
   const [leftAlert, setLeftAlert] = useState(false);
@@ -109,29 +114,63 @@ export default function EchoLensDashboard() {
           </div>
         </div>
 
-        {/* Live pill */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            background: "rgba(0,230,118,0.06)",
-            border: "1px solid rgba(0,230,118,0.2)",
-            borderRadius: 20,
-            padding: "5px 12px",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Live pill */}
           <div
             style={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              background: "#00e676",
-              boxShadow: "0 0 6px #00e676",
-              animation: "pulse 1.5s ease-in-out infinite",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              background: "rgba(0,230,118,0.06)",
+              border: "1px solid rgba(0,230,118,0.2)",
+              borderRadius: 20,
+              padding: "5px 12px",
             }}
-          />
-          <span style={{ fontSize: 9, color: "#00e676", letterSpacing: "0.18em" }}>LIVE</span>
+          >
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                background: "#00e676",
+                boxShadow: "0 0 6px #00e676",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+            />
+            <span style={{ fontSize: 9, color: "#00e676", letterSpacing: "0.18em" }}>LIVE</span>
+          </div>
+
+          {/* Back button */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                padding: "5px 12px",
+                borderRadius: 20,
+                border: "1px solid #14141e",
+                background: "transparent",
+                color: "#3a3a5a",
+                cursor: "pointer",
+                fontFamily: "'Orbitron', monospace",
+                fontSize: 9,
+                letterSpacing: "0.18em",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "#8a8aaa";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "#2a2a3a";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.color = "#3a3a5a";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "#14141e";
+              }}
+            >
+              ← HOME
+            </button>
+          )}
         </div>
       </header>
 
