@@ -127,8 +127,8 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const audioClassification: AudioClassification =
     emergency ? "ambulance" : hornDetected ? "horn" : "none";
 
-  const leftAlertFinal = leftAlert || emergency;
-  const rightAlertFinal = rightAlert || emergency;
+  const leftAlertFinal = leftAlert;
+  const rightAlertFinal = rightAlert;
 
   return (
     <div
