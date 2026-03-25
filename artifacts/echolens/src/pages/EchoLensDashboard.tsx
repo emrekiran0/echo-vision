@@ -188,29 +188,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 5,
-              background: "rgba(0,230,118,0.07)",
-              border: "1px solid rgba(0,230,118,0.22)",
-              borderRadius: 20,
-              padding: "5px 12px",
-            }}
-          >
-            <div
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: "50%",
-                background: "#00e676",
-                boxShadow: "0 0 5px #00e676",
-              }}
-            />
-            <span style={{ fontSize: 8, color: "#00e676", letterSpacing: "0.18em" }}>LIVE</span>
-          </div>
-
           {onBack && (
             <button
               onClick={onBack}
