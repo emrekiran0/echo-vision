@@ -439,12 +439,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             tick={tick}
           />
 
-          {/* ── SENSOR READOUTS ──────────────────────────────────────────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12, marginBottom: 12 }}>
-            <SensorPanel label="LEFT SENSOR" value={leftDist} alert={leftAlertFinal} blinkOn={blinkOn} />
-            <SensorPanel label="RIGHT SENSOR" value={rightDist} alert={rightAlertFinal} blinkOn={blinkOn} />
-          </div>
-
           {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
           <AudioClassifier classification={audioClassification} />
         </main>
@@ -480,25 +474,6 @@ function DistPanel({ label, value, alert, blinkOn }: { label: string; value: num
       <div style={{ fontSize: 8, color: "#3a3a5a", letterSpacing: "0.22em", marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 42, fontWeight: 900, color, textShadow: `0 0 14px ${color}80`, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 3 }}>CM</div>
-    </div>
-  );
-}
-
-function SensorPanel({ label, value, alert, blinkOn }: { label: string; value: number; alert: boolean; blinkOn: boolean }) {
-  const color = alert ? "#ff1744" : value < 100 ? "#ffd600" : "#00e676";
-  return (
-    <div
-      style={{
-        background: "#0a0a12",
-        border: `1px solid ${alert ? "rgba(255,23,68,0.3)" : "#14141e"}`,
-        borderRadius: 10,
-        padding: "16px",
-        textAlign: "center",
-      }}
-    >
-      <div style={{ fontSize: 8, color: "#3a3a5a", letterSpacing: "0.2em", marginBottom: 8 }}>{label}</div>
-      <div style={{ fontSize: 46, fontWeight: 900, color, textShadow: `0 0 16px ${color}80`, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 4 }}>cm</div>
     </div>
   );
 }
