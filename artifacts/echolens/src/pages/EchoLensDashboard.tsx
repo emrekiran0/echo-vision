@@ -460,6 +460,17 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             tick={tick}
           />
 
+          {/* ── RADAR / AUDIO SEPARATOR ──────────────────────────────────────── */}
+          <div
+            style={{
+              margin: "18px 0 16px",
+              height: 1,
+              background: "linear-gradient(to right, transparent, rgba(0,229,255,0.35), rgba(41,121,255,0.25), transparent)",
+              boxShadow: "0 0 6px rgba(0,229,255,0.18)",
+              borderRadius: 1,
+            }}
+          />
+
           {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
           <AudioClassifier classification={audioClassification} />
         </main>
