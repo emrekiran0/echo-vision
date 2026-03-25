@@ -1,9 +1,10 @@
 interface Props {
   onTryDemo: () => void;
   onViewTech: () => void;
+  onAbout: () => void;
 }
 
-export default function LandingPage({ onTryDemo, onViewTech }: Props) {
+export default function LandingPage({ onTryDemo, onViewTech, onAbout }: Props) {
   return (
     <div
       style={{
@@ -266,6 +267,39 @@ export default function LandingPage({ onTryDemo, onViewTech }: Props) {
             }}
           >
             VIEW TECHNOLOGY
+          </button>
+
+          <button
+            onClick={onAbout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "15px 32px",
+              borderRadius: 10,
+              border: "1.5px solid rgba(41,121,255,0.4)",
+              background: "rgba(41,121,255,0.07)",
+              color: "#5b9fff",
+              fontSize: 13,
+              fontWeight: 700,
+              letterSpacing: "0.18em",
+              fontFamily: "'Orbitron', monospace",
+              cursor: "pointer",
+              boxShadow: "0 0 14px rgba(41,121,255,0.2)",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(41,121,255,0.14)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(41,121,255,0.7)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 24px rgba(41,121,255,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(41,121,255,0.07)";
+              (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(41,121,255,0.4)";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 14px rgba(41,121,255,0.2)";
+            }}
+          >
+            ABOUT US
           </button>
         </div>
 

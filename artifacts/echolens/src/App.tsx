@@ -1,8 +1,9 @@
 import { useState } from "react";
 import LandingPage from "./pages/LandingPage";
 import EchoLensDashboard from "./pages/EchoLensDashboard";
+import AboutPage from "./pages/AboutPage";
 
-type Screen = "landing" | "dashboard" | "architecture";
+type Screen = "landing" | "dashboard" | "architecture" | "about";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
@@ -12,8 +13,13 @@ export default function App() {
       <LandingPage
         onTryDemo={() => setScreen("dashboard")}
         onViewTech={() => setScreen("architecture")}
+        onAbout={() => setScreen("about")}
       />
     );
+  }
+
+  if (screen === "about") {
+    return <AboutPage onBack={() => setScreen("landing")} />;
   }
 
   return (
