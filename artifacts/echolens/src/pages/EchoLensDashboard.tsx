@@ -100,18 +100,8 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
     });
   }, []);
 
-  const handleAudioClassification = useCallback((type: AudioClassification) => {
-    if (type === "ambulance") {
-      setEmergency(true);
-      setHornDetected(false);
-    } else if (type === "horn") {
-      setHornDetected(true);
-      setEmergency(false);
-    } else {
-      setEmergency(false);
-      setHornDetected(false);
-    }
-  }, []);
+  const audioClassification: AudioClassification =
+    emergency ? "ambulance" : hornDetected ? "horn" : "none";
 
   const leftAlertFinal = leftAlert || emergency;
   const rightAlertFinal = rightAlert || emergency;
@@ -483,7 +473,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           </div>
 
           {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
-          <AudioClassifier onClassificationChange={handleAudioClassification} />
+          <AudioClassifier classification={audioClassification} />
         </main>
       ) : (
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>

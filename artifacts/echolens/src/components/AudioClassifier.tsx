@@ -1,57 +1,17 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect } from "react";
 
 export type AudioClassification = "ambulance" | "horn" | "none";
 
 interface Props {
-  onClassificationChange: (type: AudioClassification) => void;
+  classification: AudioClassification;
 }
 
 const BAR_COUNT = 36;
 
-export default function AudioClassifier({ onClassificationChange }: Props) {
+export default function AudioClassifier({ classification }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animRef = useRef(0);
-  const classRef = useRef<AudioClassification>("none");
-  const stableCountRef = useRef(0);
-  const smoothedBars = useRef<number[]>(Array(BAR_COUNT).fill(0));
-  const idlePhaseRef = useRef(0);
-
-  const [micActive, setMicActive] = useState(false);
-  const [micError, setMicError] = useState<string | null>(null);
-  const [classification, setClassification] = useState<AudioClassification>("none");
-  const [volume, setVolume] = useState(0);
-
-  const stopMic = useCallback(() => {
-    cancelAnimationFrame(animRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    analyserRef.current = null;
-    setMicActive(false);
-    setClassification("none");
-    classRef.current = "none";
-    setVolume(0);
-    onClassificationChange("none");
-  }, [onClassificationChange]);
-
-  const startMic = useCallback(async () => {
-    setMicError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      source.connect(analyser);
-      streamRef.current = stream;
-      analyserRef.current = analyser;
-      setMicActive(true);
-    } catch {
-      setMicError("Microphone access denied. Tap to retry.");
-    }
-  }, []);
+  const animRef  = useRef(0);
+  const smoothed = useRef<number[]>(Array(BAR_COUNT).fill(0.06));
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -65,100 +25,74 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
     function draw() {
       if (!canvas || !ctx) return;
       frame++;
-      idlePhaseRef.current += 0.038;
 
       const W = canvas.width;
       const H = canvas.height;
-      const analyser = analyserRef.current;
 
-      // Collect real frequency data or generate idle animation
-      const freqData = new Float32Array(BAR_COUNT);
-      let avgVol = 0;
+      // ── Generate target bar heights for this frame ─────────────────────────
+      const targets = new Float32Array(BAR_COUNT);
 
-      if (analyser && micActive) {
-        const buf = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(buf);
-        const step = Math.floor(buf.length / BAR_COUNT);
+      if (classification === "none") {
+        // Calm: slow, low-amplitude overlapping sines
+        const t = frame * 0.022;
         for (let i = 0; i < BAR_COUNT; i++) {
-          let sum = 0;
-          for (let j = 0; j < step; j++) sum += buf[i * step + j];
-          freqData[i] = Math.min(1, sum / step / 255);
-        }
-        avgVol = freqData.reduce((a, b) => a + b, 0) / BAR_COUNT;
-      } else {
-        // Idle: gentle overlapping sine waves
-        const t = idlePhaseRef.current;
-        for (let i = 0; i < BAR_COUNT; i++) {
-          freqData[i] =
+          targets[i] =
             0.07 +
-            0.06 * Math.sin(t + i * 0.42) +
-            0.04 * Math.sin(t * 1.6 + i * 0.85) +
-            0.02 * Math.sin(t * 2.5 + i * 1.3);
+            0.055 * Math.sin(t + i * 0.40) +
+            0.030 * Math.sin(t * 1.7 + i * 0.75) +
+            0.015 * Math.sin(t * 3.1 + i * 1.1);
         }
-        avgVol = 0.07;
+      } else if (classification === "horn") {
+        // Sharp periodic burst — repeats every 70 frames, fast attack/decay
+        const period = 70;
+        const phase  = (frame % period) / period;
+        // Burst envelope: sine arch in first 30% of period, silent rest
+        const burst  = phase < 0.30
+          ? Math.sin((phase / 0.30) * Math.PI)
+          : 0;
+        const t = frame * 0.14; // fast oscillation inside the burst
+        for (let i = 0; i < BAR_COUNT; i++) {
+          const wave = 0.5 + 0.5 * Math.sin(t + i * 0.55);
+          // Spike shape: higher in the middle-low bins (horn is mid-freq)
+          const shape = Math.max(0, 1 - Math.abs((i / BAR_COUNT) - 0.35) * 2.2);
+          targets[i] = 0.05 + burst * (0.60 + 0.35 * wave) * (0.4 + 0.6 * shape);
+        }
+      } else {
+        // Ambulance: continuous high energy, sweeping frequency emphasis
+        const sweep = Math.sin(frame * 0.04); // slow freq sweep
+        const t     = frame * 0.20;           // fast oscillation
+        for (let i = 0; i < BAR_COUNT; i++) {
+          // Sweeping spectral peak centred around `centre`
+          const centre = 0.35 + 0.30 * sweep;
+          const dist   = Math.abs(i / BAR_COUNT - centre);
+          const shape  = Math.exp(-dist * dist * 12);
+          const wave   = 0.5 + 0.5 * Math.sin(t + i * 0.45);
+          targets[i]   = 0.28 + (0.55 * shape + 0.18) * wave;
+        }
       }
 
-      // Smooth bars
+      // ── Smooth toward targets ──────────────────────────────────────────────
+      // Latch: slower decay in ambulance so bars stay visibly high
+      const latch = classification === "ambulance" ? 0.72
+                  : classification === "horn"       ? 0.55
+                  :                                   0.80;
       for (let i = 0; i < BAR_COUNT; i++) {
-        smoothedBars.current[i] = smoothedBars.current[i] * 0.74 + freqData[i] * 0.26;
+        smoothed.current[i] = smoothed.current[i] * latch + targets[i] * (1 - latch);
       }
 
-      setVolume(avgVol);
+      // ── Derived colours ────────────────────────────────────────────────────
+      const isAmbu = classification === "ambulance";
+      const isHorn = classification === "horn";
+      const pulse  = 0.5 + 0.5 * Math.sin(frame * 0.07);
 
-      // AI classification heuristic
-      if (micActive) {
-        let newClass: AudioClassification = "none";
-        if (avgVol > 0.07) {
-          // Spectral centroid
-          let weightedSum = 0;
-          let totalWeight = 0;
-          for (let i = 0; i < BAR_COUNT; i++) {
-            weightedSum += i * freqData[i];
-            totalWeight += freqData[i];
-          }
-          const centroid = totalWeight > 0 ? weightedSum / totalWeight / BAR_COUNT : 0;
-          if (avgVol > 0.40) {
-            newClass = centroid > 0.30 ? "ambulance" : "horn";
-          } else if (avgVol > 0.11) {
-            newClass = "horn";
-          }
-        }
-
-        if (newClass === classRef.current) {
-          stableCountRef.current = Math.min(stableCountRef.current + 1, 60);
-        } else {
-          if (stableCountRef.current < 10) {
-            classRef.current = newClass;
-            stableCountRef.current = 0;
-          } else {
-            stableCountRef.current = Math.max(0, stableCountRef.current - 2);
-          }
-        }
-        if (stableCountRef.current >= 10) {
-          if (classRef.current !== newClass) {
-            classRef.current = newClass;
-            stableCountRef.current = 0;
-          }
-        }
-        setClassification(classRef.current);
-        onClassificationChange(classRef.current);
-      }
-
-      const activeClass = classRef.current;
-      const isAmbu = micActive && activeClass === "ambulance";
-      const isHorn = micActive && activeClass === "horn";
-
-      // Pulse factor for glow breathing
-      const pulse = 0.5 + 0.5 * Math.sin(frame * 0.07);
-
-      // ── Background ──────────────────────────────────────────────────────────
+      // ── Background ─────────────────────────────────────────────────────────
       ctx.clearRect(0, 0, W, H);
       ctx.fillStyle = "#07080f";
       ctx.fillRect(0, 0, W, H);
 
-      // Grid
+      // Subtle grid
       ctx.strokeStyle = "rgba(0,229,255,0.03)";
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth   = 0.5;
       for (let gx = 0; gx < W; gx += 22) {
         ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
       }
@@ -166,49 +100,45 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
         ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
       }
 
-      // Ambient glow when alert is active
-      if ((isAmbu || isHorn) && micActive) {
-        const glowA = 0.10 + pulse * 0.08;
-        const grd = ctx.createRadialGradient(W / 2, H, 0, W / 2, H / 2, W * 0.6);
-        if (isAmbu) {
-          grd.addColorStop(0, `rgba(255,23,68,${glowA})`);
-        } else {
-          grd.addColorStop(0, `rgba(255,210,0,${glowA})`);
-        }
+      // Ambient glow when alert active
+      if (isAmbu || isHorn) {
+        const glowA = 0.09 + pulse * 0.08;
+        const grd = ctx.createRadialGradient(W / 2, H, 0, W / 2, H / 2, W * 0.65);
+        grd.addColorStop(0, isAmbu ? `rgba(255,23,68,${glowA})` : `rgba(255,210,0,${glowA})`);
         grd.addColorStop(1, "transparent");
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, W, H);
       }
 
-      // ── Equalizer bars ──────────────────────────────────────────────────────
-      const padX = 6;
-      const baseY = H - 6;
+      // ── Bars ───────────────────────────────────────────────────────────────
+      const padX   = 6;
+      const baseY  = H - 6;
       const totalW = W - padX * 2;
-      const gap = 2;
-      const barW = (totalW - gap * (BAR_COUNT - 1)) / BAR_COUNT;
+      const gap    = 2;
+      const barW   = (totalW - gap * (BAR_COUNT - 1)) / BAR_COUNT;
       const maxBarH = H - 14;
 
       for (let i = 0; i < BAR_COUNT; i++) {
-        const barH = Math.max(3, smoothedBars.current[i] * maxBarH);
-        const x = padX + i * (barW + gap);
-        const y = baseY - barH;
+        const barH = Math.max(3, smoothed.current[i] * maxBarH);
+        const x    = padX + i * (barW + gap);
+        const y    = baseY - barH;
 
         let topColor: string;
         let botColor: string;
 
         if (isAmbu) {
           const isBlue = i % 2 === 1;
-          const a = 0.6 + smoothedBars.current[i] * 0.4;
+          const a = 0.55 + smoothed.current[i] * 0.45;
           topColor = isBlue ? `rgba(30,100,255,${a})` : `rgba(255,23,68,${a})`;
-          botColor = isBlue ? `rgba(30,100,255,0.12)` : `rgba(255,23,68,0.12)`;
+          botColor = isBlue ? `rgba(30,100,255,0.10)` : `rgba(255,23,68,0.10)`;
         } else if (isHorn) {
-          const a = 0.55 + smoothedBars.current[i] * 0.45;
+          const a = 0.50 + smoothed.current[i] * 0.50;
           topColor = `rgba(255,210,0,${a})`;
-          botColor = `rgba(255,210,0,0.12)`;
+          botColor = `rgba(255,210,0,0.10)`;
         } else {
-          const a = 0.35 + smoothedBars.current[i] * 0.35;
+          const a = 0.28 + smoothed.current[i] * 0.32;
           topColor = `rgba(0,229,255,${a})`;
-          botColor = `rgba(0,229,255,0.06)`;
+          botColor = `rgba(0,229,255,0.04)`;
         }
 
         const grad = ctx.createLinearGradient(x, y, x, baseY);
@@ -219,8 +149,8 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
         ctx.roundRect(x, y, barW, barH, [1, 1, 0, 0]);
         ctx.fill();
 
-        // Top cap glow
-        if (smoothedBars.current[i] > 0.18) {
+        // Top cap highlight
+        if (smoothed.current[i] > 0.18) {
           ctx.fillStyle = topColor;
           ctx.beginPath();
           ctx.roundRect(x, y, barW, 2, 1);
@@ -229,7 +159,7 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
       }
 
       // Baseline
-      ctx.strokeStyle = "rgba(0,229,255,0.10)";
+      ctx.strokeStyle = "rgba(0,229,255,0.09)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(padX, baseY);
@@ -241,40 +171,28 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
 
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [micActive, onClassificationChange]);
+  }, [classification]);
 
-  useEffect(() => () => { stopMic(); }, [stopMic]);
-
-  // Display values
+  // ── Derived display values ────────────────────────────────────────────────
   const classLabel =
-    classification === "ambulance"
-      ? "AMBULANCE DETECTED"
-      : classification === "horn"
-      ? "HORN DETECTED"
-      : "NO CRITICAL SOUND";
+    classification === "ambulance" ? "AMBULANCE DETECTED"
+    : classification === "horn"    ? "HORN DETECTED"
+    :                                "NO CRITICAL SOUND";
 
   const classColor =
-    classification === "ambulance"
-      ? "#ff1744"
-      : classification === "horn"
-      ? "#ffd600"
-      : "#2a3a4a";
+    classification === "ambulance" ? "#ff1744"
+    : classification === "horn"    ? "#ffd600"
+    :                                "#2a3a4a";
 
   const borderColor =
-    classification === "ambulance"
-      ? "rgba(255,23,68,0.50)"
-      : classification === "horn"
-      ? "rgba(255,214,0,0.45)"
-      : "rgba(0,229,255,0.10)";
+    classification === "ambulance" ? "rgba(255,23,68,0.50)"
+    : classification === "horn"    ? "rgba(255,214,0,0.45)"
+    :                                "rgba(0,229,255,0.10)";
 
   const glowShadow =
-    classification === "ambulance"
-      ? "0 0 18px rgba(255,23,68,0.22)"
-      : classification === "horn"
-      ? "0 0 18px rgba(255,214,0,0.18)"
-      : "none";
-
-  const volPct = Math.min(100, Math.round(volume * 280));
+    classification === "ambulance" ? "0 0 18px rgba(255,23,68,0.22)"
+    : classification === "horn"    ? "0 0 18px rgba(255,214,0,0.18)"
+    :                                "none";
 
   return (
     <div
@@ -308,49 +226,44 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
           >
             AI AUDIO CLASSIFICATION
           </div>
-          <div style={{ fontSize: 7, color: "#2a2a40", letterSpacing: "0.1em", marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>
-            {micActive ? "● LIVE MIC INPUT ACTIVE" : "MIC INACTIVE — TAP START"}
+          <div
+            style={{
+              fontSize: 7,
+              color: "#2a2a40",
+              letterSpacing: "0.1em",
+              marginTop: 2,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            ● AI CLASSIFICATION ACTIVE
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Volume bar */}
-          {micActive && (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3 }}>
-              <div style={{ fontSize: 7, color: "#2a3a4a", letterSpacing: "0.1em" }}>INPUT</div>
-              <div style={{ width: 52, height: 4, background: "#12121e", borderRadius: 2, overflow: "hidden" }}>
-                <div
-                  style={{
-                    width: `${volPct}%`,
-                    height: "100%",
-                    background:
-                      volPct > 68 ? "#ff1744" : volPct > 35 ? "#ffd600" : "#00e5ff",
-                    borderRadius: 2,
-                    transition: "width 0.08s, background 0.3s",
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={micActive ? stopMic : startMic}
-            style={{
-              padding: "5px 11px",
-              borderRadius: 6,
-              border: `1px solid ${micActive ? "rgba(255,23,68,0.45)" : "rgba(0,229,255,0.35)"}`,
-              background: micActive ? "rgba(255,23,68,0.10)" : "rgba(0,229,255,0.07)",
-              color: micActive ? "#ff5252" : "#00e5ff",
-              cursor: "pointer",
-              fontFamily: "'Orbitron', monospace",
-              fontSize: 8,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              transition: "all 0.25s",
-            }}
-          >
-            {micActive ? "■ STOP" : "● START"}
-          </button>
+        {/* Signal strength indicator */}
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 2 }}>
+          {[0.25, 0.45, 0.65, 0.85, 1.0].map((h, idx) => {
+            const lit =
+              classification === "ambulance" ? idx <= 4
+              : classification === "horn"    ? idx <= 2
+              :                                idx <= 1;
+            const color =
+              classification === "ambulance" ? (idx % 2 === 0 ? "#ff1744" : "#1e6eff")
+              : classification === "horn"    ? "#ffd600"
+              :                                "#00e5ff";
+            return (
+              <div
+                key={idx}
+                style={{
+                  width: 4,
+                  height: 6 + idx * 3,
+                  borderRadius: 1,
+                  background: lit ? color : "#1a1a28",
+                  boxShadow: lit ? `0 0 4px ${color}` : "none",
+                  transition: "background 0.4s, box-shadow 0.4s",
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -362,7 +275,7 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
         style={{ width: "100%", display: "block", marginTop: 8 }}
       />
 
-      {/* Classification result */}
+      {/* Classification result row */}
       <div
         style={{
           margin: "0 10px 10px",
@@ -384,7 +297,7 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
               borderRadius: "50%",
               background: classColor,
               boxShadow: classification !== "none" ? `0 0 8px ${classColor}` : "none",
-              animation: classification !== "none" && micActive ? "pulse 1s ease-in-out infinite" : "none",
+              animation: classification !== "none" ? "pulse 1s ease-in-out infinite" : "none",
               flexShrink: 0,
               transition: "background 0.4s, box-shadow 0.4s",
             }}
@@ -396,81 +309,49 @@ export default function AudioClassifier({ onClassificationChange }: Props) {
                 fontWeight: 700,
                 color: classColor,
                 letterSpacing: "0.15em",
-                textShadow:
-                  classification !== "none" && micActive
-                    ? `0 0 10px ${classColor}70`
-                    : "none",
+                textShadow: classification !== "none" ? `0 0 10px ${classColor}70` : "none",
                 transition: "color 0.4s, text-shadow 0.4s",
               }}
             >
               {classLabel}
             </div>
             <div style={{ fontSize: 7, color: "#2a2a40", letterSpacing: "0.1em", marginTop: 1 }}>
-              {micActive ? "AI CLASSIFICATION ACTIVE" : "AWAITING AUDIO INPUT"}
+              AI AUDIO CLASSIFICATION ACTIVE
             </div>
           </div>
         </div>
 
-        {/* Ambulance indicator dots */}
-        {classification === "ambulance" && micActive && (
+        {/* Ambulance: paired red + blue dots */}
+        {classification === "ambulance" && (
           <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
             <div
               style={{
-                width: 9,
-                height: 9,
-                borderRadius: "50%",
-                background: "#ff1744",
-                boxShadow: "0 0 8px #ff1744",
+                width: 9, height: 9, borderRadius: "50%",
+                background: "#ff1744", boxShadow: "0 0 8px #ff1744",
                 animation: "pulse 0.55s ease-in-out infinite",
               }}
             />
             <div
               style={{
-                width: 9,
-                height: 9,
-                borderRadius: "50%",
-                background: "#1e6eff",
-                boxShadow: "0 0 8px #1e6eff",
+                width: 9, height: 9, borderRadius: "50%",
+                background: "#1e6eff", boxShadow: "0 0 8px #1e6eff",
                 animation: "pulse 0.55s ease-in-out infinite 0.28s",
               }}
             />
           </div>
         )}
 
-        {/* Horn indicator dot */}
-        {classification === "horn" && micActive && (
+        {/* Horn: single yellow dot */}
+        {classification === "horn" && (
           <div
             style={{
-              width: 9,
-              height: 9,
-              borderRadius: "50%",
-              background: "#ffd600",
-              boxShadow: "0 0 10px #ffd600",
+              width: 9, height: 9, borderRadius: "50%",
+              background: "#ffd600", boxShadow: "0 0 10px #ffd600",
               animation: "pulse 0.8s ease-in-out infinite",
             }}
           />
         )}
       </div>
-
-      {/* Mic error */}
-      {micError && (
-        <div
-          onClick={startMic}
-          style={{
-            margin: "0 10px 10px",
-            padding: "8px 12px",
-            background: "rgba(255,23,68,0.07)",
-            border: "1px solid rgba(255,23,68,0.28)",
-            borderRadius: 8,
-            fontSize: 8,
-            color: "#ff5252",
-            letterSpacing: "0.1em",
-            cursor: "pointer",
-          }}
-        >
-          ⚠ {micError}
-        </div>
-      )}
     </div>
   );
 }
