@@ -19,6 +19,20 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [activeAlert, setActiveAlert] = useState<"ambulance" | "horn" | null>(null);
   const [blinkOn, setBlinkOn] = useState(false);
   const [tick, setTick] = useState(0);
+  const [scrollPct, setScrollPct] = useState(0);
+
+  // Scroll progress
+  useEffect(() => {
+    const onScroll = () => {
+      const el = document.documentElement;
+      const scrolled = el.scrollTop || document.body.scrollTop;
+      const total = el.scrollHeight - el.clientHeight;
+      setScrollPct(total > 0 ? Math.min(1, scrolled / total) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Blink + tick timer
   useEffect(() => {
@@ -463,6 +477,48 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           <ArchTab />
         </main>
       )}
+
+      {/* ── SCROLL PROGRESS BAR ──────────────────────────────────────────────── */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 8,
+          width: 4,
+          height: "100vh",
+          background: "rgba(0,229,255,0.06)",
+          borderRadius: 2,
+          zIndex: 300,
+          pointerEvents: "none",
+        }}
+      >
+        {/* Filled portion */}
+        <div
+          style={{
+            width: "100%",
+            height: `${scrollPct * 100}%`,
+            borderRadius: 2,
+            background: "linear-gradient(to bottom, #00e5ff, #2979ff)",
+            boxShadow: "0 0 6px rgba(0,229,255,0.55), 0 0 12px rgba(0,229,255,0.20)",
+            transition: "height 0.1s linear",
+          }}
+        />
+        {/* Glowing dot at current position */}
+        <div
+          style={{
+            position: "absolute",
+            top: `calc(${scrollPct * 100}% - 5px)`,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: "#00e5ff",
+            boxShadow: "0 0 8px rgba(0,229,255,0.9), 0 0 16px rgba(0,229,255,0.45)",
+            transition: "top 0.1s linear",
+          }}
+        />
+      </div>
 
       {/* ── HORN BOTTOM GLOW ─────────────────────────────────────────────────── */}
       {hornDetected && (
