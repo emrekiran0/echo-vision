@@ -375,21 +375,21 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           </div>
 
           <button
-            className="btn-ambu"
+            className="btn-ctrl"
             onClick={triggerEmergency}
             style={{
               width: "100%",
               padding: "11px",
               borderRadius: 9,
-              border: `1.5px solid ${emergency ? "rgba(255,23,68,0.70)" : "rgba(255,23,68,0.28)"}`,
-              background: emergency ? "rgba(255,23,68,0.14)" : "rgba(255,23,68,0.04)",
-              color: emergency ? "#ff1744" : "#6a2828",
+              border: `1.5px solid ${emergency ? "#ff1744cc" : "#ff174459"}`,
+              background: emergency ? "#ff174422" : "#ff174412",
+              color: "#ff1744",
               cursor: "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
-              transition: "background 0.25s, border-color 0.25s, color 0.25s",
+              boxShadow: emergency ? "0 0 18px #ff174455" : "0 0 10px #ff174418",
               marginBottom: 20,
             }}
           >
@@ -397,21 +397,21 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           </button>
 
           <button
-            className="btn-horn"
+            className="btn-ctrl"
             onClick={() => setHornDetected((h) => !h)}
             style={{
               width: "100%",
               padding: "11px",
               borderRadius: 9,
-              border: `1.5px solid ${hornDetected ? "rgba(255,210,0,0.70)" : "rgba(255,210,0,0.28)"}`,
-              background: hornDetected ? "rgba(255,210,0,0.10)" : "rgba(255,210,0,0.03)",
-              color: hornDetected ? "#ffd600" : "#5a4e10",
+              border: `1.5px solid ${hornDetected ? "#ffd600cc" : "#ffd60059"}`,
+              background: hornDetected ? "#ffd60022" : "#ffd60012",
+              color: "#ffd600",
               cursor: "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
-              transition: "background 0.25s, border-color 0.25s, color 0.25s",
+              boxShadow: hornDetected ? "0 0 18px #ffd60055" : "0 0 10px #ffd60018",
               marginBottom: 20,
             }}
           >
@@ -468,37 +468,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
       <style>{`
         @keyframes pulse     { 0%,100%{opacity:1}    50%{opacity:0.4} }
         @keyframes hornPulse { 0%,100%{opacity:0.55} 50%{opacity:1}   }
-
-        @keyframes glowAmbu {
-          0%,100% { box-shadow: 0 0 5px rgba(255,23,68,0.20), 0 0 0 rgba(255,23,68,0); }
-          50%     { box-shadow: 0 0 16px rgba(255,23,68,0.52), 0 0 6px rgba(255,23,68,0.22); }
-        }
-        @keyframes glowHorn {
-          0%,100% { box-shadow: 0 0 5px rgba(255,210,0,0.18), 0 0 0 rgba(255,210,0,0); }
-          50%     { box-shadow: 0 0 16px rgba(255,210,0,0.48), 0 0 6px rgba(255,210,0,0.20); }
-        }
-        @keyframes flashAmbu {
-          0%   { box-shadow: 0 0 40px rgba(255,23,68,0.90), inset 0 0 18px rgba(255,23,68,0.25); }
-          100% { box-shadow: 0 0 8px  rgba(255,23,68,0.22); }
-        }
-        @keyframes flashHorn {
-          0%   { box-shadow: 0 0 40px rgba(255,210,0,0.85), inset 0 0 18px rgba(255,210,0,0.22); }
-          100% { box-shadow: 0 0 8px  rgba(255,210,0,0.20); }
-        }
-
-        .btn-ambu { animation: glowAmbu 2.2s ease-in-out infinite; }
-        .btn-ambu:hover {
-          box-shadow: 0 0 26px rgba(255,23,68,0.65), 0 0 8px rgba(255,23,68,0.30) !important;
-          animation-play-state: paused;
-        }
-        .btn-ambu:active { animation: flashAmbu 0.4s ease-out forwards !important; }
-
-        .btn-horn { animation: glowHorn 2.5s ease-in-out infinite; }
-        .btn-horn:hover {
-          box-shadow: 0 0 26px rgba(255,210,0,0.58), 0 0 8px rgba(255,210,0,0.26) !important;
-          animation-play-state: paused;
-        }
-        .btn-horn:active { animation: flashHorn 0.4s ease-out forwards !important; }
 
         .btn-ctrl { transition: filter 0.18s ease, box-shadow 0.18s ease; }
         .btn-ctrl:hover  { filter: brightness(1.35); }
