@@ -182,7 +182,7 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
 
           const ttW = 110;
           const ttH = 32;
-          const ttX = bx + 10;
+          const ttX = bx - ttW - 10;
           const ttY = by - ttH / 2;
           ctx.fillStyle = "rgba(20,14,0,0.9)";
           ctx.strokeStyle = "#ff9100";
