@@ -359,6 +359,53 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
                 <div style={{ fontSize: 9, color: "#ff9999", letterSpacing: "0.15em", marginTop: 4 }}>PULL OVER SAFELY</div>
               </div>
             )}
+
+            {/* Horn HUD label */}
+            {hornDetected && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "22%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  pointerEvents: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 4,
+                  animation: "hornPulse 1.6s ease-in-out infinite",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 900,
+                    color: "#ffd600",
+                    letterSpacing: "0.26em",
+                    textShadow: "0 0 12px rgba(255,214,0,0.9), 0 0 28px rgba(255,214,0,0.45)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ▲ HORN DETECTED
+                </div>
+                <div
+                  style={{
+                    width: 90,
+                    height: 1,
+                    background: "linear-gradient(to right, transparent, rgba(255,214,0,0.7), transparent)",
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: 7,
+                    color: "rgba(255,214,0,0.65)",
+                    letterSpacing: "0.18em",
+                  }}
+                >
+                  VEHICLE AHEAD
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ── DISTANCE PANELS ──────────────────────────────────────────────── */}
