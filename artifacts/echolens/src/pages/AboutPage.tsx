@@ -194,6 +194,7 @@ export default function AboutPage({ onBack }: Props) {
               fontFamily: "'JetBrains Mono', monospace",
               fontWeight: 300,
               letterSpacing: "0.01em",
+              textAlign: "justify",
             }}
           >
             Emre Kiran and Efil Saylam. Third-year Computer Engineering students. We saw a problem
@@ -212,6 +213,7 @@ export default function AboutPage({ onBack }: Props) {
               fontFamily: "'JetBrains Mono', monospace",
               fontWeight: 300,
               letterSpacing: "0.01em",
+              textAlign: "justify",
             }}
           >
             Hearing-impaired drivers deserve to know what is happening around them on the road. Our
