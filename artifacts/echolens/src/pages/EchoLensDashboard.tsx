@@ -392,7 +392,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           <button
             className="btn-ctrl"
             onClick={triggerEmergency}
-            disabled={activeAlert === "horn"}
+            disabled={activeAlert === "horn" || leftAlert || rightAlert}
             style={{
               width: "100%",
               padding: "11px",
@@ -400,14 +400,14 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
               border: `1.5px solid ${emergency ? "#2979ffcc" : "#2979ff59"}`,
               background: emergency ? "#2979ff22" : "#2979ff12",
               color: "#2979ff",
-              cursor: activeAlert === "horn" ? "not-allowed" : "pointer",
+              cursor: (activeAlert === "horn" || leftAlert || rightAlert) ? "not-allowed" : "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
               boxShadow: emergency ? "0 0 18px #2979ff55" : "0 0 10px #2979ff18",
               marginBottom: 20,
-              opacity: activeAlert === "horn" ? 0.35 : 1,
+              opacity: (activeAlert === "horn" || leftAlert || rightAlert) ? 0.35 : 1,
               transition: "opacity 0.2s",
             }}
           >
@@ -417,7 +417,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           <button
             className="btn-ctrl"
             onClick={triggerHorn}
-            disabled={activeAlert === "ambulance"}
+            disabled={activeAlert === "ambulance" || leftAlert || rightAlert}
             style={{
               width: "100%",
               padding: "11px",
@@ -425,14 +425,14 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
               border: `1.5px solid ${hornDetected ? "#ffd600cc" : "#ffd60059"}`,
               background: hornDetected ? "#ffd60022" : "#ffd60012",
               color: "#ffd600",
-              cursor: activeAlert === "ambulance" ? "not-allowed" : "pointer",
+              cursor: (activeAlert === "ambulance" || leftAlert || rightAlert) ? "not-allowed" : "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
               boxShadow: hornDetected ? "0 0 18px #ffd60055" : "0 0 10px #ffd60018",
               marginBottom: 20,
-              opacity: activeAlert === "ambulance" ? 0.35 : 1,
+              opacity: (activeAlert === "ambulance" || leftAlert || rightAlert) ? 0.35 : 1,
               transition: "opacity 0.2s",
             }}
           >
