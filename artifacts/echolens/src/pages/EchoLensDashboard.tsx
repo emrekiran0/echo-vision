@@ -616,20 +616,20 @@ function ArchTab() {
           title: "KART 1 — SENSOR UNIT (ESP32)",
           color: "#ffab00",
           items: [
-            { icon: "🎤", label: "PDM Mic", sub: "TinyML Audio" },
-            { icon: "📡", label: "Ultrasonic", sub: "L + R HC-SR04" },
-            { icon: "🛰", label: "GPS NEO-6M", sub: "UART 9600" },
-            { icon: "🔊", label: "Buzzer", sub: "PWM 2kHz" },
+            { icon: "🎤", label: "PDM Mic" },
+            { icon: "📡", label: "Ultrasonic" },
+            { icon: "🛰", label: "GPS NEO-6M" },
+            { icon: "🔊", label: "Buzzer" },
           ],
         },
         {
           title: "KART 2 — DISPLAY UNIT (ESP32)",
           color: "#00e5ff",
           items: [
-            { icon: "🖥", label: "TFT Display", sub: "ILI9341 SPI" },
-            { icon: "📶", label: "WiFi", sub: "ThingSpeak" },
-            { icon: "⚡", label: "FreeRTOS", sub: "Dual Core" },
-            { icon: "🔔", label: "Alerts", sub: "Visual + Buzzer" },
+            { icon: "🖥", label: "TFT Display" },
+            { icon: "📶", label: "WiFi" },
+            { icon: "⚡", label: "FreeRTOS" },
+            { icon: "🔔", label: "Alerts" },
           ],
         },
       ].map((section) => (
@@ -639,10 +639,9 @@ function ArchTab() {
           </div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {section.items.map((item) => (
-              <div key={item.label} style={box(section.color)}>
-                <div style={{ fontSize: 18, marginBottom: 4 }}>{item.icon}</div>
+              <div key={item.label} style={{ ...box(section.color), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: "14px 12px" }}>
+                <div style={{ fontSize: 20, lineHeight: 1 }}>{item.icon}</div>
                 <div style={{ fontWeight: 600 }}>{item.label}</div>
-                <div style={{ fontSize: 8, color: "#3a3a5a", marginTop: 2 }}>{item.sub}</div>
               </div>
             ))}
           </div>
