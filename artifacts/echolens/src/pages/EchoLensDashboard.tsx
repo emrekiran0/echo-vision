@@ -16,8 +16,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const [rightDist, setRightDist] = useState(95);
   const [leftAlert, setLeftAlert] = useState(false);
   const [rightAlert, setRightAlert] = useState(false);
-  const [emergency, setEmergency] = useState(false);
-  const [hornDetected, setHornDetected] = useState(false);
+  const [activeAlert, setActiveAlert] = useState<"ambulance" | "horn" | null>(null);
   const [blinkOn, setBlinkOn] = useState(false);
   const [tick, setTick] = useState(0);
 
@@ -87,18 +86,29 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   const reset = useCallback(() => {
     setLeftAlert(false);
     setRightAlert(false);
-    setEmergency(false);
-    setHornDetected(false);
+    setActiveAlert(null);
     setLeftDist(120);
     setRightDist(95);
   }, []);
 
   const triggerEmergency = useCallback(() => {
-    setEmergency((e) => {
-      if (!e) { setLeftAlert(false); setRightAlert(false); }
-      return !e;
+    setActiveAlert((prev) => {
+      if (prev === "ambulance") return null;
+      if (prev !== null) return prev;
+      return "ambulance";
     });
   }, []);
+
+  const triggerHorn = useCallback(() => {
+    setActiveAlert((prev) => {
+      if (prev === "horn") return null;
+      if (prev !== null) return prev;
+      return "horn";
+    });
+  }, []);
+
+  const emergency = activeAlert === "ambulance";
+  const hornDetected = activeAlert === "horn";
 
   const audioClassification: AudioClassification =
     emergency ? "ambulance" : hornDetected ? "horn" : "none";
@@ -377,20 +387,23 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           <button
             className="btn-ctrl"
             onClick={triggerEmergency}
+            disabled={activeAlert === "horn"}
             style={{
               width: "100%",
               padding: "11px",
               borderRadius: 9,
-              border: `1.5px solid ${emergency ? "#ff1744cc" : "#ff174459"}`,
-              background: emergency ? "#ff174422" : "#ff174412",
-              color: "#ff1744",
-              cursor: "pointer",
+              border: `1.5px solid ${emergency ? "#2979ffcc" : "#2979ff59"}`,
+              background: emergency ? "#2979ff22" : "#2979ff12",
+              color: "#2979ff",
+              cursor: activeAlert === "horn" ? "not-allowed" : "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
-              boxShadow: emergency ? "0 0 18px #ff174455" : "0 0 10px #ff174418",
+              boxShadow: emergency ? "0 0 18px #2979ff55" : "0 0 10px #2979ff18",
               marginBottom: 20,
+              opacity: activeAlert === "horn" ? 0.35 : 1,
+              transition: "opacity 0.2s",
             }}
           >
             {emergency ? "⬛ STOP EMERGENCY" : "🚑 TRIGGER EMERGENCY ALERT"}
@@ -398,7 +411,8 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
 
           <button
             className="btn-ctrl"
-            onClick={() => setHornDetected((h) => !h)}
+            onClick={triggerHorn}
+            disabled={activeAlert === "ambulance"}
             style={{
               width: "100%",
               padding: "11px",
@@ -406,13 +420,15 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
               border: `1.5px solid ${hornDetected ? "#ffd600cc" : "#ffd60059"}`,
               background: hornDetected ? "#ffd60022" : "#ffd60012",
               color: "#ffd600",
-              cursor: "pointer",
+              cursor: activeAlert === "ambulance" ? "not-allowed" : "pointer",
               fontFamily: "'Orbitron', monospace",
               fontSize: 9,
               fontWeight: 700,
               letterSpacing: "0.18em",
               boxShadow: hornDetected ? "0 0 18px #ffd60055" : "0 0 10px #ffd60018",
               marginBottom: 20,
+              opacity: activeAlert === "ambulance" ? 0.35 : 1,
+              transition: "opacity 0.2s",
             }}
           >
             {hornDetected ? "⬛ STOP HORN ALERT" : "📯 TRIGGER HORN ALERT"}
