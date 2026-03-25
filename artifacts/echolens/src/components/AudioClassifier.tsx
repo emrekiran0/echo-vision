@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 export type AudioClassification = "ambulance" | "horn" | "none";
 
@@ -12,6 +12,12 @@ export default function AudioClassifier({ classification }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef  = useRef(0);
   const smoothed = useRef<number[]>(Array(BAR_COUNT).fill(0.06));
+  const [dots, setDots] = useState(1);
+
+  useEffect(() => {
+    const iv = setInterval(() => setDots((d) => (d % 3) + 1), 550);
+    return () => clearInterval(iv);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -236,6 +242,19 @@ export default function AudioClassifier({ classification }: Props) {
             }}
           >
             ● AI CLASSIFICATION ACTIVE
+          </div>
+          <div
+            style={{
+              fontSize: 7,
+              color: "#ffd600",
+              letterSpacing: "0.1em",
+              marginTop: 3,
+              fontFamily: "'JetBrains Mono', monospace",
+              opacity: 0.75,
+              textShadow: "0 0 6px rgba(255,214,0,0.4)",
+            }}
+          >
+            ◉ Listening to ambient sounds{".".repeat(dots)}
           </div>
         </div>
 
