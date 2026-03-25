@@ -448,8 +448,26 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
         </main>
       )}
 
+      {/* ── HORN BOTTOM GLOW ─────────────────────────────────────────────────── */}
+      {hornDetected && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 90,
+            background: "linear-gradient(to top, rgba(255,214,0,0.28) 0%, rgba(255,214,0,0.10) 45%, transparent 100%)",
+            pointerEvents: "none",
+            zIndex: 200,
+            animation: "hornPulse 1.6s ease-in-out infinite",
+          }}
+        />
+      )}
+
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes hornPulse { 0%,100%{opacity:0.55} 50%{opacity:1} }
       `}</style>
     </div>
   );
