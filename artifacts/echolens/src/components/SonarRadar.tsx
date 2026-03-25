@@ -533,9 +533,10 @@ export default function SonarRadar({ leftAlert, rightAlert, leftDist, rightDist,
               color: "#00e5ff",
               letterSpacing: "0.2em",
               textShadow: "0 0 10px rgba(0,229,255,0.5)",
+              animation: "listenPulse 2.4s ease-in-out infinite",
             }}
           >
-            SONAR ARRAY ACTIVE
+            LISTENING FOR CRITICAL SOUNDS
           </div>
           <div
             style={{
