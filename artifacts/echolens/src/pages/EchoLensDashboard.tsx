@@ -155,33 +155,35 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             style={{
               width: 32,
               height: 32,
-              borderRadius: 9,
-              background: "rgba(0,229,255,0.08)",
-              border: "1px solid rgba(0,229,255,0.25)",
+              borderRadius: 8,
+              border: "1.5px solid rgba(0,229,255,0.5)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 15,
+              background: "rgba(0,229,255,0.06)",
             }}
           >
-            👂
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M8 1.5C8 1.5 2 5 2 9.5C2 12.5 4.7 14.5 8 14.5C11.3 14.5 14 12.5 14 9.5C14 5 8 1.5 8 1.5Z"
+                stroke="#00e5ff"
+                strokeWidth="1.2"
+                fill="none"
+              />
+              <circle cx="8" cy="9" r="2" fill="#00e5ff" opacity="0.8" />
+            </svg>
           </div>
-          <div>
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 900,
-                letterSpacing: "0.3em",
-                color: "#00e5ff",
-                textShadow: "0 0 16px rgba(0,229,255,0.5)",
-                lineHeight: 1,
-              }}
-            >
-              ECHOLENS
-            </div>
-            <div style={{ fontSize: 8, color: "#2e2e4e", letterSpacing: "0.2em", marginTop: 3 }}>
-              HEARING-ASSISTIVE DRIVING KIT
-            </div>
+          <div
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              letterSpacing: "0.3em",
+              color: "#00e5ff",
+              textShadow: "0 0 16px rgba(0,229,255,0.5)",
+              lineHeight: 1,
+            }}
+          >
+            ECHOVISION
           </div>
         </div>
 
@@ -212,16 +214,28 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           {onBack && (
             <button
               onClick={onBack}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 14px rgba(255,214,0,0.55), 0 0 4px rgba(255,214,0,0.3)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,214,0,0.75)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#ffe033";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 8px rgba(255,214,0,0.3), 0 0 2px rgba(255,214,0,0.15)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,214,0,0.5)";
+                (e.currentTarget as HTMLButtonElement).style.color = "#ffd600";
+              }}
               style={{
                 padding: "5px 12px",
                 borderRadius: 20,
-                border: "1px solid #14141e",
-                background: "transparent",
-                color: "#3a3a5a",
+                border: "1px solid rgba(255,214,0,0.5)",
+                background: "rgba(255,214,0,0.07)",
+                color: "#ffd600",
                 cursor: "pointer",
                 fontFamily: "'Orbitron', monospace",
                 fontSize: 8,
                 letterSpacing: "0.18em",
+                boxShadow: "0 0 8px rgba(255,214,0,0.3), 0 0 2px rgba(255,214,0,0.15)",
+                transition: "all 0.18s ease",
               }}
             >
               ← HOME

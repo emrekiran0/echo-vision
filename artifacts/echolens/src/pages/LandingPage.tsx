@@ -87,7 +87,7 @@ export default function LandingPage({ onTryDemo, onViewTech }: Props) {
             letterSpacing: "0.12em",
           }}
         >
-          ECHOLENS
+          ECHOVISION
           <span style={{ color: "#00e5ff", marginLeft: 1 }}>.</span>
           <span style={{ fontSize: 11, color: "#4a4a6a", marginLeft: 4, fontWeight: 400 }}>AI</span>
         </span>
