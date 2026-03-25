@@ -445,33 +445,6 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
             <SensorPanel label="RIGHT SENSOR" value={rightDist} alert={rightAlertFinal} blinkOn={blinkOn} />
           </div>
 
-          {/* ── SIMULATION CONTROLS ──────────────────────────────────────────── */}
-          <div
-            style={{
-              background: "#0a0a12",
-              border: "1px solid #14141e",
-              borderRadius: 12,
-              padding: "16px",
-              marginBottom: 12,
-            }}
-          >
-            <div style={{ fontSize: 9, color: "#3a3a5a", letterSpacing: "0.22em", marginBottom: 14 }}>
-              SIMULATION CONTROLS
-            </div>
-            <SliderRow
-              label="Left Sensor Distance"
-              value={leftDist}
-              onChange={(v) => { setLeftDist(v); setLeftAlert(v < 50); }}
-              alert={leftAlertFinal}
-            />
-            <SliderRow
-              label="Right Sensor Distance"
-              value={rightDist}
-              onChange={(v) => { setRightDist(v); setRightAlert(v < 50); }}
-              alert={rightAlertFinal}
-            />
-          </div>
-
           {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
           <AudioClassifier classification={audioClassification} />
         </main>
@@ -551,34 +524,6 @@ function CtrlBtn({ label, onClick, active, color, isReset }: { label: string; on
     >
       {label}
     </button>
-  );
-}
-
-function SliderRow({ label, value, onChange, alert }: { label: string; value: number; onChange: (v: number) => void; alert: boolean }) {
-  const color = alert ? "#ff1744" : "#00e5ff";
-  return (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontSize: 9, color: "#5a5a7a", fontFamily: "'JetBrains Mono', monospace" }}>{label}</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color, fontFamily: "'Orbitron', monospace" }}>{value} cm</span>
-      </div>
-      <input
-        type="range"
-        min={5}
-        max={200}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{
-          width: "100%",
-          height: 4,
-          borderRadius: 2,
-          appearance: "none",
-          cursor: "pointer",
-          background: `linear-gradient(to right, ${color} ${((value - 5) / 195) * 100}%, #1e1e2e ${((value - 5) / 195) * 100}%)`,
-          accentColor: color,
-        }}
-      />
-    </div>
   );
 }
 
