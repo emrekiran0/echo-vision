@@ -234,24 +234,13 @@ export default function AudioClassifier({ classification }: Props) {
           </div>
           <div
             style={{
-              fontSize: 7,
-              color: "#2a2a40",
-              letterSpacing: "0.1em",
-              marginTop: 2,
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
-            ● AI CLASSIFICATION ACTIVE
-          </div>
-          <div
-            style={{
-              fontSize: 7,
+              fontSize: 9,
               color: "#ffd600",
-              letterSpacing: "0.1em",
+              letterSpacing: "0.12em",
               marginTop: 3,
               fontFamily: "'JetBrains Mono', monospace",
-              opacity: 0.75,
-              textShadow: "0 0 6px rgba(255,214,0,0.4)",
+              textShadow: "0 0 8px rgba(255,214,0,0.55)",
+              animation: "listenPulse 2s ease-in-out infinite",
             }}
           >
             ◉ Listening to ambient sounds{".".repeat(dots)}

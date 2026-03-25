@@ -529,8 +529,9 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
       )}
 
       <style>{`
-        @keyframes pulse     { 0%,100%{opacity:1}    50%{opacity:0.4} }
-        @keyframes hornPulse { 0%,100%{opacity:0.55} 50%{opacity:1}   }
+        @keyframes pulse       { 0%,100%{opacity:1}    50%{opacity:0.4} }
+        @keyframes hornPulse   { 0%,100%{opacity:0.55} 50%{opacity:1}   }
+        @keyframes listenPulse { 0%,100%{opacity:0.65} 50%{opacity:1}   }
 
         .btn-ctrl { transition: filter 0.18s ease, box-shadow 0.18s ease; }
         .btn-ctrl:hover  { filter: brightness(1.35); }
