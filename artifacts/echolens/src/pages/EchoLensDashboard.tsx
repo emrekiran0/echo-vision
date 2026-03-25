@@ -222,7 +222,7 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
       </header>
 
       {/* ── TABS ─────────────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", borderBottom: "1px solid #14141e" }}>
+      <div style={{ display: "flex", justifyContent: "center", borderBottom: "1px solid #14141e" }}>
         {(["dashboard", "architecture"] as Tab[]).map((t) => (
           <button
             key={t}
