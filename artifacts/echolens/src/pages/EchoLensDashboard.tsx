@@ -88,13 +88,25 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
   }, []);
 
   const triggerLeft = useCallback(() => {
-    setLeftAlert(false);
-    setLeftDist((d) => { animateDown(setLeftDist, setLeftAlert, d); return d; });
+    setLeftAlert((prev) => {
+      if (prev) {
+        setLeftDist(120);
+        return false;
+      }
+      setLeftDist((d) => { animateDown(setLeftDist, setLeftAlert, d); return d; });
+      return false;
+    });
   }, [animateDown]);
 
   const triggerRight = useCallback(() => {
-    setRightAlert(false);
-    setRightDist((d) => { animateDown(setRightDist, setRightAlert, d); return d; });
+    setRightAlert((prev) => {
+      if (prev) {
+        setRightDist(95);
+        return false;
+      }
+      setRightDist((d) => { animateDown(setRightDist, setRightAlert, d); return d; });
+      return false;
+    });
   }, [animateDown]);
 
   const reset = useCallback(() => {
