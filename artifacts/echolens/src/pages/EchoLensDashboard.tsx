@@ -485,6 +485,161 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
 
           {/* ── AI AUDIO CLASSIFIER ──────────────────────────────────────────── */}
           <AudioClassifier classification={audioClassification} />
+
+          {/* ── ABOUT US ─────────────────────────────────────────────────────── */}
+          <div style={{ marginTop: 32 }}>
+            <div
+              style={{
+                height: 1,
+                background: "linear-gradient(to right, transparent, rgba(100,80,200,0.5), rgba(0,229,255,0.4), rgba(100,80,200,0.5), transparent)",
+                marginBottom: 24,
+              }}
+            />
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.28em",
+                color: "#00e5ff",
+                textShadow: "0 0 12px rgba(0,229,255,0.4)",
+                marginBottom: 16,
+                textAlign: "center",
+              }}
+            >
+              ABOUT US
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {/* Who We Are */}
+              <div
+                style={{
+                  background: "#0a0a12",
+                  border: "1.5px solid rgba(0,229,255,0.12)",
+                  borderRadius: 12,
+                  padding: "18px 20px",
+                  boxShadow: "0 0 24px rgba(0,229,255,0.04)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 8,
+                    letterSpacing: "0.22em",
+                    color: "#00e5ff",
+                    marginBottom: 10,
+                    opacity: 0.7,
+                  }}
+                >
+                  WHO WE ARE
+                </div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#b0b0cc",
+                    lineHeight: 1.75,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 300,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Emre Kiran and Efil Saylam. Third-year Computer Engineering students. We saw a problem that affects millions of people every day and decided to do something about it.
+                </p>
+              </div>
+
+              {/* Our Mission */}
+              <div
+                style={{
+                  background: "#0a0a12",
+                  border: "1.5px solid rgba(100,80,200,0.18)",
+                  borderRadius: 12,
+                  padding: "18px 20px",
+                  boxShadow: "0 0 24px rgba(100,80,200,0.04)",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: 8,
+                    letterSpacing: "0.22em",
+                    color: "#a070ff",
+                    marginBottom: 10,
+                    opacity: 0.8,
+                  }}
+                >
+                  OUR MISSION
+                </div>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 12,
+                    color: "#b0b0cc",
+                    lineHeight: 1.75,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 300,
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  Hearing-impaired drivers deserve to know what is happening around them on the road. Our mission is to make that possible. We are building affordable, accessible technology that turns traffic sounds into visual information so every driver can drive independently and safely.
+                </p>
+              </div>
+
+              {/* LinkedIn Buttons */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                  paddingTop: 4,
+                  paddingBottom: 8,
+                }}
+              >
+                {[
+                  { name: "Emre Kiran", url: "https://www.linkedin.com/in/emrekirann/" },
+                  { name: "Efil Saylam", url: "https://www.linkedin.com/in/efil-saylam/" },
+                ].map((person) => (
+                  <a
+                    key={person.name}
+                    href={person.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 18px",
+                      borderRadius: 20,
+                      border: "1px solid rgba(10,102,194,0.55)",
+                      background: "rgba(10,102,194,0.1)",
+                      color: "#5ba3e8",
+                      fontSize: 9,
+                      fontWeight: 700,
+                      letterSpacing: "0.16em",
+                      fontFamily: "'Orbitron', monospace",
+                      textDecoration: "none",
+                      boxShadow: "0 0 10px rgba(10,102,194,0.22)",
+                      transition: "all 0.18s ease",
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 18px rgba(10,102,194,0.55), 0 0 6px rgba(10,102,194,0.3)";
+                      (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(10,102,194,0.85)";
+                      (e.currentTarget as HTMLAnchorElement).style.color = "#80bfff";
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 0 10px rgba(10,102,194,0.22)";
+                      (e.currentTarget as HTMLAnchorElement).style.borderColor = "rgba(10,102,194,0.55)";
+                      (e.currentTarget as HTMLAnchorElement).style.color = "#5ba3e8";
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    {person.name.toUpperCase()}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
         </main>
       ) : (
         <main style={{ maxWidth: 680, margin: "0 auto", padding: "16px 14px 32px" }}>
