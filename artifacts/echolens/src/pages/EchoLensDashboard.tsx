@@ -448,26 +448,52 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
         </main>
       )}
 
-      {/* ── HORN BOTTOM GLOW ─────────────────────────────────────────────────── */}
+      {/* ── HORN FULL-SCREEN OVERLAY ─────────────────────────────────────────── */}
       {hornDetected && (
         <div
           style={{
             position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 90,
-            background: "linear-gradient(to top, rgba(255,214,0,0.28) 0%, rgba(255,214,0,0.10) 45%, transparent 100%)",
+            inset: 0,
+            background: blinkOn ? "rgba(255,214,0,0.11)" : "rgba(80,55,0,0.16)",
+            border: `2px solid rgba(255,214,0,${blinkOn ? 0.55 : 0.18})`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             pointerEvents: "none",
             zIndex: 200,
-            animation: "hornPulse 1.6s ease-in-out infinite",
+            transition: "background 0.45s, border-color 0.45s",
+            boxShadow: `inset 0 0 60px rgba(255,214,0,${blinkOn ? 0.18 : 0.06})`,
           }}
-        />
+        >
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 900,
+              color: blinkOn ? "#fff" : "#ffd600",
+              letterSpacing: "0.22em",
+              textShadow: "0 0 22px rgba(255,214,0,0.95)",
+              fontFamily: "'Orbitron', monospace",
+            }}
+          >
+            ⚠ HORN ALERT
+          </div>
+          <div
+            style={{
+              fontSize: 9,
+              color: "#ffe57a",
+              letterSpacing: "0.18em",
+              marginTop: 6,
+              fontFamily: "'Orbitron', monospace",
+            }}
+          >
+            CHECK SURROUNDINGS
+          </div>
+        </div>
       )}
 
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        @keyframes hornPulse { 0%,100%{opacity:0.55} 50%{opacity:1} }
       `}</style>
     </div>
   );
