@@ -499,6 +499,10 @@ export default function EchoLensDashboard({ initialTab = "dashboard", onBack }: 
           animation-play-state: paused;
         }
         .btn-horn:active { animation: flashHorn 0.4s ease-out forwards !important; }
+
+        .btn-ctrl { transition: filter 0.18s ease, box-shadow 0.18s ease; }
+        .btn-ctrl:hover  { filter: brightness(1.35); }
+        .btn-ctrl:active { filter: brightness(0.72); }
       `}</style>
     </div>
   );
@@ -530,20 +534,20 @@ function DistPanel({ label, value, alert, blinkOn }: { label: string; value: num
 function CtrlBtn({ label, onClick, active, color, isReset }: { label: string; onClick: () => void; active?: boolean; color: string; isReset?: boolean }) {
   return (
     <button
+      className="btn-ctrl"
       onClick={onClick}
       style={{
         padding: "11px 6px",
         borderRadius: 9,
-        border: `1.5px solid ${isReset ? "rgba(0,229,255,0.35)" : active ? `${color}80` : `${color}22`}`,
-        background: isReset ? "rgba(0,229,255,0.07)" : active ? `${color}16` : `${color}05`,
-        color: isReset ? "#00e5ff" : active ? color : `${color}55`,
+        border: `1.5px solid ${active ? `${color}cc` : isReset ? "rgba(0,229,255,0.38)" : `${color}59`}`,
+        background: active ? `${color}22` : isReset ? "rgba(0,229,255,0.07)" : `${color}12`,
+        color: isReset ? "#00e5ff" : color,
         cursor: "pointer",
         fontFamily: "'Orbitron', monospace",
         fontSize: 10,
         fontWeight: 700,
         letterSpacing: "0.14em",
-        transition: "all 0.22s",
-        boxShadow: active ? `0 0 14px ${color}28` : isReset ? "0 0 10px rgba(0,229,255,0.08)" : "none",
+        boxShadow: active ? `0 0 18px ${color}55` : `0 0 10px ${color}18`,
       }}
     >
       {label}
